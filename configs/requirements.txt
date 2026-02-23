@@ -1,0 +1,9 @@
+pip install PyPDF2
+pip install pdfminer.six
+pip install pdfplumber
+pip install pdf2image
+pip install Pillow
+pip install dotenv
+
+poppler from https://github.com/oschwartz10612/poppler-windows/releases/tag/v25.12.0-0
+tesseract from https://github.com/UB-Mannheim/tesseract/wiki
