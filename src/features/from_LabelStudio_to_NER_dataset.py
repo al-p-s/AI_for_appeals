@@ -98,27 +98,10 @@ class LabelStudioToBIOLUConverter:
             for ex in examples:
                 f.write(json.dumps(ex, ensure_ascii=False) + '\n')
 
-    def save_as_hf_format(self, output_file, examples):
-        label2id = {label: i for i, label in enumerate(self.all_labels)}
-
-        hf_examples = []
-        for ex in examples:
-            hf_ex = {
-                'id': str(hash(ex['text'])),
-                'tokens': ex['tokens'],
-                'ner_tags': [label2id.get(tag, 0) for tag in ex['ner_tags']],
-                'text': ex['text']
-            }
-            hf_examples.append(hf_ex)
-
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(hf_examples, f, ensure_ascii=False, indent=2)
-
 input_file = "../../data/appeals_with_marks.json"
 
 converter = LabelStudioToBIOLUConverter(input_file)
 
 examples, stats = converter.convert_all()
 
-converter.save_as_jsonl("training_data_biolu.jsonl", examples)
-converter.save_as_hf_format("training_data_hf.json", examples)
+converter.save_as_jsonl("../../data/training_data_biolu.jsonl", examples)
