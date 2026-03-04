@@ -23,6 +23,7 @@ def get_card_id_by_filename(appeals_dir, pdf_name):
 
 
 def find_question_xml_by_contract_ref(questions_dir, card_id):
+    results = []
     for fname in os.listdir(questions_dir):
         if not fname.lower().endswith('.xml'):
             continue
@@ -31,11 +32,9 @@ def find_question_xml_by_contract_ref(questions_dir, card_id):
             text = decode_xml(fpath)
         except Exception:
             continue
-        if card_id.upper() in text.upper():
-            if re.search(rf'ContractRef="{re.escape(card_id)}"', text, re.IGNORECASE):
-                return text
-
-    return None
+        if re.search(rf'ContractRef="{re.escape(card_id)}"', text, re.IGNORECASE):
+            results.append((text, fname))
+    return results
 
 
 def extract_category(xml_text):
@@ -62,22 +61,25 @@ def build_dataset(cropped_appeals_dir, appeals_dir, questions_dir, output_path):
             no_folder.append(pdf_name)
             continue
 
-        xml_text = find_question_xml_by_contract_ref(questions_dir, card_id)
-        if not xml_text:
-            print(f"  [!] XML ответа не найден для CardID: {card_id} ({pdf_name})")
+        matches = find_question_xml_by_contract_ref(questions_dir, card_id)
+        if not matches:
             no_question.append(pdf_name)
+            results.append({"file_name": pdf_name, "card_id": card_id, "question_xmls": [], "categories": None})
             continue
 
-        category = extract_category(xml_text)
-        if not category:
-            print(f"  [!] Категория не найдена в XML ответа для: {pdf_name}")
-            no_category.append(pdf_name)
-            continue
+        categories = []
+        xml_fnames = []
+        for xml_text, xml_fname in matches:
+            cat = extract_category(xml_text)
+            xml_fnames.append(xml_fname)
+            if cat:
+                categories.append(cat)
 
         results.append({
             "file_name": pdf_name,
             "card_id": card_id,
-            "category": category
+            "question-xmls": xml_fnames,
+            "categories": categories if categories else None
         })
         # print(f"  [+] {pdf_name} -> {category}")
 
