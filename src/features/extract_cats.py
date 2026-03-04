@@ -81,7 +81,7 @@ def build_dataset(cropped_appeals_dir, appeals_dir, questions_dir, output_path):
             "question-xmls": xml_fnames,
             "categories": categories if categories else None
         })
-        # print(f"  [+] {pdf_name} -> {category}")
+        # print(f"  [+] {pdf_name} -> {categories}")
 
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump({"appeals": results}, f, ensure_ascii=False, indent=4)
