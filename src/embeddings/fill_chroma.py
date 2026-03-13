@@ -1,18 +1,20 @@
 import json
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from typing import List
+from sentence_transformers import SentenceTransformer
+from langchain.embeddings.base import Embeddings
 from langchain_community.vectorstores import Chroma
 
-ROSBERTA_PATH = "../../models/ru-en-RoSBERTa"
+from USER2Embeddings import USER2Embeddings
+
+USER2_PATH = "../../models/USER2-base"
 CHROMA_PATH = "../../data/chroma"
 CATEGORIES_JSON = "../../data/classifier/cats.json"
 COLLECTION_NAME = "appeals_cats"
-
 
 def load_categories(path: str) -> list[dict]:
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
     return data["categories"]
-
 
 def build_chroma(categories: list[dict]) -> Chroma:
     texts = []
@@ -36,13 +38,9 @@ def build_chroma(categories: list[dict]) -> Chroma:
         })
 
     print(f"Загружено категорий: {len(texts)}")
-    print("Инициализируем эмбеддинг модель...")
+    print("Инициализируем USER2-base...")
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name=ROSBERTA_PATH,
-        model_kwargs={"device": "cuda"},
-        encode_kwargs={"normalize_embeddings": True},
-    )
+    embeddings = USER2Embeddings(model_path=USER2_PATH, device="cuda")
 
     print("Строим Chroma базу...")
     chroma_db = Chroma.from_texts(
