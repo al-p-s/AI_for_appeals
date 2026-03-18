@@ -3,15 +3,15 @@ import json
 
 from src.features.text_extractor import pdf_extract
 
-directory = r'../../data/cropped_appeals'
+directory = r'E:/работа/обрезание/выбранные'
 files = os.listdir(directory)
-json_path = "../../data/appeals.json"
+json_path = "../../data/appeals_chelyabinsk_MISHA.json"
 
 all_appeals = []
 
 for file in files:
     text = pdf_extract(os.path.join(directory, file))
-
+    print(file)
     appeal_data = {
         "file_name": file,
         "text": text
