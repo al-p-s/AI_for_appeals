@@ -12,6 +12,14 @@ APPEALS_WITH_CATS = "../../data/appeals_with_cats.json"
 APPEALS_WITH_TEXT = "../../data/appeals.json"
 TOP_K = 10
 
+MARKERS = [
+    "Текст обращения:",
+    "Текст обращения :",
+    "Содержание обращения:",
+    "Содержание обращения :",
+    "Вопрос:"
+]
+
 
 def load_chroma() -> Chroma:
     embeddings = USER2Embeddings()
@@ -26,6 +34,15 @@ def load_geracl() -> ZeroShotClassificationPipeline:
     model = GeraclHF.from_pretrained(GERACL_MODEL).to("cuda").eval()
     tokenizer = AutoTokenizer.from_pretrained(GERACL_MODEL)
     return ZeroShotClassificationPipeline(model, tokenizer, device="cuda")
+
+
+def extract_content(text: str) -> tuple[str, str]:
+    for marker in MARKERS:
+        idx = text.find(marker)
+        if idx != -1:
+            extracted = text[idx + len(marker):].strip()
+            return extracted, marker
+    return text, ""
 
 
 def get_true_codes(categories: list[str]) -> tuple[set[str], list[dict]]:
@@ -48,8 +65,7 @@ def classify(text: str, chroma_db: Chroma, geracl_pipe: ZeroShotClassificationPi
         candidates.append({
             "code": doc.metadata["code"],
             "name": doc.metadata["name"],
-            "parent_name": doc.metadata["parent_name"],
-            "label": doc.metadata["name"]
+            "label": doc.metadata["name"],
         })
 
     labels = [c["label"] for c in candidates]
@@ -66,23 +82,31 @@ def evaluate():
     with open(APPEALS_WITH_TEXT, "r", encoding="utf-8") as f:
         text_data = json.load(f)
 
-    # джойним по file_name
     text_by_file = {a["file_name"]: a["text"] for a in text_data["appeals"]}
-
     appeals = cats_data["appeals"]
+
     print(f"Всего обращений с категориями: {len(appeals)}")
     print(f"Обращений с текстом: {len(text_by_file)}")
-
     print("Загружаем модели...")
     chroma_db = load_chroma()
     geracl_pipe = load_geracl()
     print("Готово.\n")
 
-    strict_correct = 0
-    topk_correct = 0
+    # статистика маркеров
+    marker_found = 0
+    marker_stats = {m: 0 for m in MARKERS}
+
+    # метрики полный текст
+    full_strict = 0
+    full_topk = 0
+
+    # метрики обрезанный текст
+    cut_strict = 0
+    cut_topk = 0
+
     total = 0
     skipped = 0
-    errors = []
+    errors_cut = []
 
     for appeal in tqdm(appeals, desc="Evaluating"):
         file_name = appeal["file_name"]
@@ -93,9 +117,15 @@ def evaluate():
             continue
 
         true_codes, true_labeled = get_true_codes(appeal["categories"])
+        extracted, found_marker = extract_content(text)
+
+        if found_marker:
+            marker_found += 1
+            marker_stats[found_marker] += 1
 
         try:
-            predicted_code, top_k_codes, candidates, best_idx = classify(text, chroma_db, geracl_pipe)
+            pred_full, topk_full, _, _ = classify(text, chroma_db, geracl_pipe)
+            pred_cut, topk_cut, candidates_cut, best_idx_cut = classify(extracted, chroma_db, geracl_pipe)
         except Exception as e:
             print(f"Ошибка на {file_name}: {e}")
             skipped += 1
@@ -103,32 +133,41 @@ def evaluate():
 
         total += 1
 
-        if predicted_code in true_codes:
-            strict_correct += 1
+        if pred_full in true_codes:
+            full_strict += 1
+        if true_codes & set(topk_full):
+            full_topk += 1
 
-        if true_codes & set(top_k_codes):
-            topk_correct += 1
+        if pred_cut in true_codes:
+            cut_strict += 1
+        if true_codes & set(topk_cut):
+            cut_topk += 1
         else:
-            errors.append({
+            errors_cut.append({
                 "file": file_name,
                 "true": true_labeled,
-                "predicted_code": predicted_code,
-                "predicted_label": candidates[best_idx]["label"],
-                "top_k": [{"code": c["code"], "label": c["label"]} for c in candidates],
+                "predicted_code": pred_cut,
+                "predicted_label": candidates_cut[best_idx_cut]["label"],
+                "top_k": [{"code": c["code"], "label": c["label"]} for c in candidates_cut],
             })
 
-    print(f"\n{'='*50}")
-    print(f"Обработано:        {total}")
-    print(f"Пропущено:         {skipped}")
-    print(f"{'='*50}")
-    print(f"Strict accuracy:   {strict_correct}/{total} = {strict_correct/total*100:.1f}%")
-    print(f"Top-{TOP_K} accuracy:   {topk_correct}/{total} = {topk_correct/total*100:.1f}%")
-    print(f"{'='*50}")
+    print(f"\n{'='*55}")
+    print(f"Обработано: {total}  |  Пропущено: {skipped}")
+    print(f"Маркер найден: {marker_found}/{total} ({marker_found/total*100:.1f}%)")
+    print(f"\nСтатистика по маркерам:")
+    for m, cnt in marker_stats.items():
+        if cnt > 0:
+            print(f"  '{m}': {cnt}")
+    print(f"\n{'='*55}")
+    print(f"{'':30} {'Полный':>10} {'Обрезанный':>12}")
+    print(f"{'Strict accuracy':30} {full_strict/total*100:>9.1f}% {cut_strict/total*100:>11.1f}%")
+    print(f"{'Top-{} accuracy'.format(TOP_K):30} {full_topk/total*100:>9.1f}% {cut_topk/total*100:>11.1f}%")
+    print(f"{'='*55}")
 
-    if errors:
-        with open("../../data/eval_errors.json", "w", encoding="utf-8") as f:
-            json.dump(errors, f, ensure_ascii=False, indent=2)
-        print(f"\nКейсы где топ-{TOP_K} не попал: {len(errors)} шт. → data/eval_errors.json")
+    if errors_cut:
+        with open("../../data/eval_errors_cut.json", "w", encoding="utf-8") as f:
+            json.dump(errors_cut, f, ensure_ascii=False, indent=2)
+        print(f"\nКейсы где топ-{TOP_K} не попал (обрезанный): {len(errors_cut)} шт. → data/eval_errors_cut.json")
 
 
 if __name__ == "__main__":
