@@ -1,7 +1,7 @@
 import json
 from tqdm import tqdm
 from langchain_community.vectorstores import Chroma
-from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
+from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, BitsAndBytesConfig
 import torch
 from geracl import GeraclHF, ZeroShotClassificationPipeline
 from src.embeddings.USER2Embeddings import USER2Embeddings
@@ -13,7 +13,7 @@ GIGACHAT_MODEL = "../../models/gigaChat_lite"
 APPEALS_WITH_CATS = "../../data/appeals_with_cats.json"
 APPEALS_WITH_TEXT = "../../data/appeals.json"
 TOP_K = 10
-EVAL_LIMIT = 10
+EVAL_LIMIT = 1
 
 MARKERS = [
     "Текст обращения:",
@@ -22,6 +22,8 @@ MARKERS = [
     "Содержание обращения :",
     "Вопрос:"
 ]
+
+MARKERS = []
 
 
 def load_chroma() -> Chroma:
@@ -41,43 +43,36 @@ def load_geracl() -> ZeroShotClassificationPipeline:
 
 def load_gigachat() -> tuple:
     tokenizer = AutoTokenizer.from_pretrained(GIGACHAT_MODEL, trust_remote_code=True)
-    model = AutoModelForCausalLM.from_pretrained(GIGACHAT_MODEL, trust_remote_code=True, device_map="auto")
-    model.generation_config = GenerationConfig.from_pretrained(GIGACHAT_MODEL)
-    return tokenizer, model
+
+    # quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+
+    model = AutoModelForCausalLM.from_pretrained(
+        GIGACHAT_MODEL,
+        trust_remote_code=True,
+        torch_dtype=torch.bfloat16,
+    )
+    generation_config = GenerationConfig.from_pretrained(GIGACHAT_MODEL, trust_remote_code=True)
+
+    return tokenizer, model, generation_config
 
 
-def summarize(text: str, tokenizer, model) -> str:
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                """Ты — эксперт по классификации обращений граждан.
-                Твоя задача — извлечь из текста жалобы только самую важную информацию,
-                необходимую для поиска подходящей категории.
-                Обязательно сохрани названия организаций и конкретные сущности (вода, отопление, мусор).
-                Ответ должен быть одной строкой длиной не более 200 символов."""
-            )
-        },
-        {
-            "role": "user",
-            "content": f"Извлеки ключевую информацию из обращения:\n{text}"
-        }
-    ]
-    input_tensor = tokenizer.apply_chat_template(
-        messages,
-        add_generation_prompt=True,
-        return_tensors="pt"
-    ).to(model.device)
+def summarize(text: str, tokenizer, model, generation_config) -> str:
+    query = (
+        "Выдели основную суть проблемы из обращения гражданина. "
+        "Одно предложение, официальный стиль, без вводных слов.\n\n"
+        f"ОБРАЩЕНИЕ:\n{text}"
+    )
+    prompt = tokenizer.apply_chat_template(
+        [{"role": "user", "content": query}],
+        tokenize=False, add_generation_prompt=True
+    )
+    data = tokenizer(prompt, return_tensors="pt", add_special_tokens=False)
+    data = {k: v.to(model.device) for k, v in data.items()}
+    data.pop("token_type_ids", None)
 
-    with torch.no_grad():
-        outputs = model.generate(
-            input_tensor,
-            do_sample=False,
-            repetition_penalty=1.1,
-        )
-
-    result = tokenizer.decode(outputs[0][input_tensor.shape[1]:], skip_special_tokens=True)
-    return result.strip()
+    output_ids = model.generate(**data, generation_config=generation_config)[0]
+    output_ids = output_ids[len(data["input_ids"][0]):]
+    return tokenizer.decode(output_ids, skip_special_tokens=True).strip()
 
 
 def extract_content(text: str) -> tuple[str, str]:
@@ -137,7 +132,7 @@ def evaluate():
     print("Загружаем модели...")
     chroma_db = load_chroma()
     geracl_pipe = load_geracl()
-    gigachat_tokenizer, gigachat_model = load_gigachat()
+    gigachat_tokenizer, gigachat_model, gigachat_gen_config = load_gigachat()
     print("Готово.\n")
 
     marker_found = 0
@@ -168,7 +163,7 @@ def evaluate():
 
         # суммаризируем обрезанный текст (если маркер найден) или полный
         text_for_summary = extracted if found_marker else text
-        summary = summarize(text_for_summary, gigachat_tokenizer, gigachat_model)
+        summary = summarize(text_for_summary, gigachat_tokenizer, gigachat_model, gigachat_gen_config)
 
         try:
             pred_full,  topk_full,  _,              _            = classify(text,     chroma_db, geracl_pipe)
