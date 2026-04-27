@@ -6,24 +6,14 @@ import torch
 from geracl import GeraclHF, ZeroShotClassificationPipeline
 from src.embeddings.USER2Embeddings import USER2Embeddings
 
-CHROMA_PATH = "../../data/chroma"
+CHROMA_PATH = "../../data/chroma_backup"
 COLLECTION_NAME = "appeals_cats"
 GERACL_MODEL = "../../models/GeRaCl-USER2-base"
 GIGACHAT_MODEL = "../../models/gigaChat_lite"
 APPEALS_WITH_CATS = "../../data/appeals_with_cats.json"
 APPEALS_WITH_TEXT = "../../data/appeals.json"
-TOP_K = 10
-EVAL_LIMIT = 1
-
-MARKERS = [
-    "Текст обращения:",
-    "Текст обращения :",
-    "Содержание обращения:",
-    "Содержание обращения :",
-    "Вопрос:"
-]
-
-MARKERS = []
+TOP_K = 60
+EVAL_LIMIT = 10
 
 
 def load_chroma() -> Chroma:
@@ -43,24 +33,31 @@ def load_geracl() -> ZeroShotClassificationPipeline:
 
 def load_gigachat() -> tuple:
     tokenizer = AutoTokenizer.from_pretrained(GIGACHAT_MODEL, trust_remote_code=True)
-
-    # quantization_config = BitsAndBytesConfig(load_in_8bit=True)
-
     model = AutoModelForCausalLM.from_pretrained(
         GIGACHAT_MODEL,
         trust_remote_code=True,
         torch_dtype=torch.bfloat16,
     )
     generation_config = GenerationConfig.from_pretrained(GIGACHAT_MODEL, trust_remote_code=True)
-
+    generation_config.max_new_tokens = 80
+    generation_config.do_sample = False
     return tokenizer, model, generation_config
 
 
 def summarize(text: str, tokenizer, model, generation_config) -> str:
     query = (
-        "Выдели основную суть проблемы из обращения гражданина. "
-        "Одно предложение, официальный стиль, без вводных слов.\n\n"
-        f"ОБРАЩЕНИЕ:\n{text}"
+        '''Ты — эксперт по классификации обращений граждан РФ.
+    Прочитай обращение и сформулируй его суть в виде 2-3 коротких номинальных фраз (существительное + прилагательное / уточнение), как
+    будто это название раздела официального классификатора.
+    Без глаголов, без предложений, без имён и адресов.
+    ОБРАЩЕНИЕ: {text}'''
+        # f"""Ты — эксперт по классификации обращений граждан.
+        # Прочитай обращение и выпиши ключевые слова и короткие фразы, которые наиболее точно описывают суть проблемы.
+        # Игнорируй эмоции и медицинские детали. Выдели только суть административного запроса к органу власти.
+        # Первым словом укажи тематику: Земля / Транспорт / ЖКХ / Соцзащита / Строительство / Здравоохранение / и т.д.
+        # Затем — ключевые слова сути проблемы, аварии или происшествия. Игнорируй имена, даты, адреса, реквизиты.
+        # Ответ — только список слов и коротких фраз через запятую, без предложений и пояснений.\n\n
+        # ОБРАЩЕНИЕ:\n{text}"""
     )
     prompt = tokenizer.apply_chat_template(
         [{"role": "user", "content": query}],
@@ -73,15 +70,6 @@ def summarize(text: str, tokenizer, model, generation_config) -> str:
     output_ids = model.generate(**data, generation_config=generation_config)[0]
     output_ids = output_ids[len(data["input_ids"][0]):]
     return tokenizer.decode(output_ids, skip_special_tokens=True).strip()
-
-
-def extract_content(text: str) -> tuple[str, str]:
-    for marker in MARKERS:
-        idx = text.find(marker)
-        if idx != -1:
-            extracted = text[idx + len(marker):].strip()
-            return extracted, marker
-    return text, ""
 
 
 def get_true_codes(categories: list[str]) -> tuple[set[str], list[dict]]:
@@ -105,6 +93,7 @@ def classify(text: str, chroma_db: Chroma, geracl_pipe: ZeroShotClassificationPi
             "code": doc.metadata["code"],
             "name": doc.metadata["name"],
             "label": doc.metadata["name"],
+            "score": float(score),
         })
 
     labels = [c["label"] for c in candidates]
@@ -135,12 +124,8 @@ def evaluate():
     gigachat_tokenizer, gigachat_model, gigachat_gen_config = load_gigachat()
     print("Готово.\n")
 
-    marker_found = 0
-    marker_stats = {m: 0 for m in MARKERS}
-
-    full_strict = 0;   full_topk = 0
-    cut_strict = 0;    cut_topk = 0
-    summ_strict = 0;   summ_topk = 0
+    full_strict = 0;  full_topk = 0
+    summ_strict = 0;  summ_topk = 0
 
     total = 0
     skipped = 0
@@ -155,20 +140,14 @@ def evaluate():
             continue
 
         true_codes, true_labeled = get_true_codes(appeal["categories"])
-        extracted, found_marker = extract_content(text)
-
-        if found_marker:
-            marker_found += 1
-            marker_stats[found_marker] += 1
-
-        # суммаризируем обрезанный текст (если маркер найден) или полный
-        text_for_summary = extracted if found_marker else text
-        summary = summarize(text_for_summary, gigachat_tokenizer, gigachat_model, gigachat_gen_config)
+        print(f"Суммаризация {file_name}...")
+        summary = summarize(text, gigachat_tokenizer, gigachat_model, gigachat_gen_config)
 
         try:
-            pred_full,  topk_full,  _,              _            = classify(text,     chroma_db, geracl_pipe)
-            pred_cut,   topk_cut,   candidates_cut, best_idx_cut = classify(extracted, chroma_db, geracl_pipe)
-            pred_summ,  topk_summ,  candidates_summ, best_idx_summ = classify(summary, chroma_db, geracl_pipe)
+            print(f"Classify full...")
+            pred_full, topk_full, _, _                            = classify(text,    chroma_db, geracl_pipe)
+            print(f"Classify summ...")
+            pred_summ, topk_summ, candidates_summ, best_idx_summ = classify(summary, chroma_db, geracl_pipe)
         except Exception as e:
             print(f"Ошибка на {file_name}: {e}")
             skipped += 1
@@ -176,13 +155,10 @@ def evaluate():
 
         total += 1
 
-        if pred_full in true_codes:    full_strict += 1
+        if pred_full in true_codes:     full_strict += 1
         if true_codes & set(topk_full): full_topk += 1
 
-        if pred_cut in true_codes:     cut_strict += 1
-        if true_codes & set(topk_cut):  cut_topk += 1
-
-        if pred_summ in true_codes:    summ_strict += 1
+        if pred_summ in true_codes:     summ_strict += 1
         if true_codes & set(topk_summ): summ_topk += 1
         else:
             errors_summ.append({
@@ -191,26 +167,24 @@ def evaluate():
                 "true": true_labeled,
                 "predicted_code": pred_summ,
                 "predicted_label": candidates_summ[best_idx_summ]["label"],
-                "top_k": [{"code": c["code"], "label": c["label"]} for c in candidates_summ],
+                "top_k": [
+                    {"code": c["code"], "label": c["label"], "score": c["score"]}
+                    for c in candidates_summ
+                ],
             })
 
-    print(f"\n{'='*62}")
+    print(f"\n{'='*50}")
     print(f"Обработано: {total}  |  Пропущено: {skipped}")
-    print(f"Маркер найден: {marker_found}/{total} ({marker_found/total*100:.1f}%)")
-    print(f"\nСтатистика по маркерам:")
-    for m, cnt in marker_stats.items():
-        if cnt > 0:
-            print(f"  '{m}': {cnt}")
-    print(f"\n{'='*62}")
-    print(f"{'':30} {'Полный':>9} {'Обрезанный':>11} {'Суммаризация':>13}")
-    print(f"{'Strict accuracy':30} {full_strict/total*100:>8.1f}% {cut_strict/total*100:>10.1f}% {summ_strict/total*100:>12.1f}%")
-    print(f"{'Top-{} accuracy'.format(TOP_K):30} {full_topk/total*100:>8.1f}% {cut_topk/total*100:>10.1f}% {summ_topk/total*100:>12.1f}%")
-    print(f"{'='*62}")
+    print(f"\n{'='*50}")
+    print(f"{'':30} {'Полный':>9} {'Суммаризация':>13}")
+    print(f"{'Strict accuracy':30} {full_strict/total*100:>8.1f}% {summ_strict/total*100:>12.1f}%")
+    print(f"{'Top-{} accuracy'.format(TOP_K):30} {full_topk/total*100:>8.1f}% {summ_topk/total*100:>12.1f}%")
+    print(f"{'='*50}")
 
     if errors_summ:
-        with open("../../data/eval_errors_summ.json", "w", encoding="utf-8") as f:
+        with open("../../data/classifier/eval_errors_summ10.json", "w", encoding="utf-8") as f:
             json.dump(errors_summ, f, ensure_ascii=False, indent=2)
-        print(f"\nКейсы где топ-{TOP_K} не попал (суммаризация): {len(errors_summ)} шт. → data/eval_errors_summ.json")
+        print(f"\nПромахи top-{TOP_K} (суммаризация): {len(errors_summ)} шт.")
 
 
 if __name__ == "__main__":

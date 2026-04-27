@@ -1,0 +1,109 @@
+import json
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
+
+APPEALS_PATH      = "../../data/appeals.json"
+APPEALS_CATS_PATH = "../../data/appeals_with_cats.json"
+CATS_L2_PATH      = "../../data/classifier/cats2.json"
+CATS_L3_PATH      = "../../data/classifier/cats3.json"
+CATS_L4_PATH      = "../../data/classifier/cats.json"
+OUTPUT_PATH       = "../../data/sets_to_learn/dataset_hier.json"
+GIGACHAT_PATH     = "../../models/gigaChat_lite"
+# MAX_NEW_TOKENS    = 80
+EVAL_LIMIT        = None
+
+SUMM_PROMPT = """Ты — эксперт по классификации обращений граждан.
+Опиши суть обращения кратко, убрав весь мусор из исходного.
+Используй терминологию Классификатора Обращений Граждан РФ.
+Старайся отразить главную суть, предмет обращения.
+
+ОБРАЩЕНИЕ:
+{text}"""
+
+
+def get_prefix(code: str, level: int) -> str:
+    parts = code.split(".")
+    return ".".join(parts[:level] + ["0000"] * (4 - level))
+
+
+def load_gigachat() -> tuple:
+    tokenizer = AutoTokenizer.from_pretrained(GIGACHAT_PATH, trust_remote_code=True)
+    model = AutoModelForCausalLM.from_pretrained(
+        GIGACHAT_PATH,
+        trust_remote_code=True,
+        torch_dtype=torch.bfloat16,
+    )
+    gen_config = GenerationConfig.from_pretrained(GIGACHAT_PATH, trust_remote_code=True)
+    # gen_config.max_new_tokens = MAX_NEW_TOKENS
+    gen_config.do_sample = False
+    return tokenizer, model, gen_config
+
+
+def summarize(text, tokenizer, model, gen_config) -> str:
+    prompt = tokenizer.apply_chat_template(
+        [{"role": "user", "content": SUMM_PROMPT.format(text=text[:3000])}],
+        tokenize=False, add_generation_prompt=True
+    )
+    data = tokenizer(prompt, return_tensors="pt", add_special_tokens=False)
+    data = {k: v.to(model.device) for k, v in data.items()}
+    data.pop("token_type_ids", None)
+    output_ids = model.generate(**data, generation_config=gen_config)[0]
+    output_ids = output_ids[len(data["input_ids"][0]):]
+    return tokenizer.decode(output_ids, skip_special_tokens=True).strip()
+
+
+def children(cats, parent_code, level):
+    prefix = ".".join(parent_code.split(".")[:level])
+    return [c for c in cats if c["code"].startswith(prefix + ".")]
+
+
+def main():
+    with open(APPEALS_PATH, encoding="utf-8") as f:
+        text_by_file = {a["file_name"]: a["text"] for a in json.load(f)["appeals"]}
+    with open(APPEALS_CATS_PATH, encoding="utf-8") as f:
+        appeals = json.load(f)["appeals"]
+    cats_l2 = json.load(open(CATS_L2_PATH, encoding="utf-8"))["categories"]
+    cats_l3 = json.load(open(CATS_L3_PATH, encoding="utf-8"))["categories"]
+    cats_l4 = json.load(open(CATS_L4_PATH, encoding="utf-8"))["categories"]
+
+    if EVAL_LIMIT:
+        appeals = appeals[:EVAL_LIMIT]
+
+    tokenizer, model, gen_config = load_gigachat()
+
+    dataset = []
+    for i, appeal in enumerate(appeals):
+        file_name = appeal["file_name"]
+        text = text_by_file.get(file_name, "").strip()
+        if not text:
+            print(f"[{i+1}] {file_name} — нет текста, пропуск")
+            continue
+
+        # Берём первую категорию (multi-label потом)
+        true_code = appeal["categories"][0].split(" ")[0]
+        true_l2 = get_prefix(true_code, 2)
+        true_l3 = get_prefix(true_code, 3)
+        true_l4 = true_code
+
+        print(f"[{i+1}/{len(appeals)}] {file_name} → суммаризация...")
+        summary = summarize(text, tokenizer, model, gen_config)
+        print(f"  {summary}")
+
+        dataset.append({
+            "file_name":      file_name,
+            "summary":        summary,
+            "true_l2":        true_l2,
+            "true_l3":        true_l3,
+            "true_l4":        true_l4,
+            "candidates_l2":  cats_l2,
+            "candidates_l3":  children(cats_l3, true_l2, 2),
+            "candidates_l4":  children(cats_l4, true_l3, 3),
+        })
+
+    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
+        json.dump(dataset, f, ensure_ascii=False, indent=2)
+    print(f"\nГотово. Записей: {len(dataset)} → {OUTPUT_PATH}")
+
+
+if __name__ == "__main__":
+    main()
