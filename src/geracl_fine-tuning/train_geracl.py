@@ -11,7 +11,7 @@ from transformers import AutoModelForSequenceClassification
 from pathlib import Path
 
 
-DATASET_PATH = "../../data/sets_to_learn/dataset_hier.json"
+DATASET_PATH = "../../data/sets_to_learn/dataset_hier721.json"
 GERACL_PATH  = "../../models/GeRaCl-USER2-base"
 OUTPUT_DIR   = "../../models/GeRaCl-finetuned721"
 
