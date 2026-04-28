@@ -15,7 +15,6 @@ CATS_L3 = "../../data/classifier/cats3.json"
 CATS_L4 = "../../data/classifier/cats.json"
 
 GIGACHAT_PATH = "../../models/gigaChat_lite"
-# GERACL_PATH = "../../models/GeRaCl-USER2-base"
 GERACL_PATH_L2 = "../../models/GeRaCl-finetuned/L2"
 GERACL_PATH_L3 = "../../models/GeRaCl-finetuned/L3"
 GERACL_PATH_L4 = "../../models/GeRaCl-finetuned/L4"
