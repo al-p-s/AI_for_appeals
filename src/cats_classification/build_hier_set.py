@@ -2,12 +2,11 @@ import json
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 
-APPEALS_PATH      = "../../data/appeals.json"
-APPEALS_CATS_PATH = "../../data/appeals_with_cats.json"
+APPEALS_CATS_PATH = "../../data/sets_to_learn/appeals_w_cats/appeals_w_cats721.json"
 CATS_L2_PATH      = "../../data/classifier/cats2.json"
 CATS_L3_PATH      = "../../data/classifier/cats3.json"
 CATS_L4_PATH      = "../../data/classifier/cats.json"
-OUTPUT_PATH       = "../../data/sets_to_learn/dataset_hier.json"
+OUTPUT_PATH       = "../../data/sets_to_learn/dataset_hier721.json"
 GIGACHAT_PATH     = "../../models/gigaChat_lite"
 # MAX_NEW_TOKENS    = 80
 EVAL_LIMIT        = None
@@ -58,10 +57,9 @@ def children(cats, parent_code, level):
 
 
 def main():
-    with open(APPEALS_PATH, encoding="utf-8") as f:
-        text_by_file = {a["file_name"]: a["text"] for a in json.load(f)["appeals"]}
     with open(APPEALS_CATS_PATH, encoding="utf-8") as f:
         appeals = json.load(f)["appeals"]
+    text_by_file = {a["file_name"]: a["text"] for a in appeals}
     cats_l2 = json.load(open(CATS_L2_PATH, encoding="utf-8"))["categories"]
     cats_l3 = json.load(open(CATS_L3_PATH, encoding="utf-8"))["categories"]
     cats_l4 = json.load(open(CATS_L4_PATH, encoding="utf-8"))["categories"]
