@@ -1,27 +1,22 @@
 import json
-import re
-from pathlib import Path
 from transformers import pipeline
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, BitsAndBytesConfig
 from transformers import AutoModelForSequenceClassification
 import torch
-from geracl import GeraclHF, ZeroShotClassificationPipeline
 
-APPEALS_PATH = "../../data/appeals.json"
-APPEALS_CATS = "../../data/appeals_with_cats.json"
-# CATS_L1 = "../../data/classifier/cats1.json"
+APPEALS_PATH = "../../data/sets_to_learn/appeals_w_cats/appeals_w_cats721.json"
 CATS_L2 = "../../data/classifier/cats2.json"
 CATS_L3 = "../../data/classifier/cats3.json"
-CATS_L4 = "../../data/classifier/cats.json"
+CATS_L4 = "../../data/classifier/cats4.json"
 
 GIGACHAT_PATH = "../../models/gigaChat_lite"
-GERACL_PATH_L2 = "../../models/GeRaCl-finetuned/L2"
-GERACL_PATH_L3 = "../../models/GeRaCl-finetuned/L3"
-GERACL_PATH_L4 = "../../models/GeRaCl-finetuned/L4"
+GERACL_PATH_L2 = "../../models/GeRaCl-finetuned721_v2/L2"
+GERACL_PATH_L3 = "../../models/GeRaCl-finetuned721_v2/L3"
+GERACL_PATH_L4 = "../../models/GeRaCl-finetuned721_v2/L4"
 
 # MAX_NEW_TOKENS = 80
 EVAL_LIMIT = None
-ERRORS_OUT = "../../data/classifier/eval_errors_hierarchy255.json"
+ERRORS_OUT = "../../data/classifier/eval_errors_hierarchy721.json"
 
 SUMM_PROMPT = """Ты — эксперт по суммаризации обращений граждан. Напиши выжимку в 1-2 предложения, строго по правилам:
 
@@ -77,21 +72,19 @@ def classify_level(summary, candidates, tokenizer_model):
     scores = []
     for label in labels:
         enc = tokenizer(summary, label, return_tensors="pt",
-                        truncation=True, max_length=256).to("cuda")
+                        truncation=True, max_length=512).to("cuda")
         with torch.no_grad():
             logits = model(**enc).logits
-        scores.append(logits[0][0].item())  # entailment score
+        scores.append(logits[0][0].item())
     best_idx = scores.index(max(scores))
     return candidates[best_idx]["code"]
 
 
 def main():
-    appeals_text = {a["file_name"]: a["text"]
-                    for a in load_json(APPEALS_PATH)["appeals"]}
-    appeals_cats = {a["file_name"]: a["categories"]
-                    for a in load_json(APPEALS_CATS)["appeals"]}
+    combined = load_json(APPEALS_PATH)["appeals"]
+    appeals_text = {a["file_name"]: a["text"] for a in combined}
+    appeals_cats = {a["file_name"]: a["categories"] for a in combined}
 
-    # cats_l1 = load_json(CATS_L1)["categories"]
     cats_l2 = load_json(CATS_L2)["categories"]
     cats_l3 = load_json(CATS_L3)["categories"]
     cats_l4 = load_json(CATS_L4)["categories"]
@@ -123,15 +116,11 @@ def main():
         true_cat_str = appeals_cats[file_name][0]
         true_code    = true_cat_str.split(" ")[0]
 
-        # true_l1 = get_prefix(true_code, 1)
         true_l2 = get_prefix(true_code, 2)
         true_l3 = get_prefix(true_code, 3)
         true_l4 = true_code
 
         summary = summarize(text, gigachat_tok, gigachat_model, gigachat_gen)
-
-        # pred_l1 = classify_level(summary, cats_l1, geracl_pipe)
-        # ok_l1   = pred_l1 == true_l1
 
         cands_l2 = cats_l2
         pred_l2 = classify_level(summary, cands_l2, geracl_l2)

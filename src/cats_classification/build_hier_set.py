@@ -5,8 +5,8 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 APPEALS_CATS_PATH = "../../data/sets_to_learn/appeals_w_cats/appeals_w_cats721.json"
 CATS_L2_PATH      = "../../data/classifier/cats2.json"
 CATS_L3_PATH      = "../../data/classifier/cats3.json"
-CATS_L4_PATH      = "../../data/classifier/cats.json"
-OUTPUT_PATH       = "../../data/sets_to_learn/dataset_hier721_try2.json"
+CATS_L4_PATH      = "../../data/classifier/cats4.json"
+OUTPUT_PATH       = "../../data/sets_to_learn/dataset_hier721_prompt2.json"
 GIGACHAT_PATH     = "../../models/gigaChat_lite"
 # MAX_NEW_TOKENS    = 80
 EVAL_LIMIT        = None
