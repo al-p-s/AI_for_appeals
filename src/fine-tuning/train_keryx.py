@@ -21,7 +21,7 @@ MAX_LEN = 256
 LEVEL_CONFIG = {
     2: {"epochs": 5, "lr": 2e-5, "n_neg": 20},
     3: {"epochs": 5, "lr": 2e-5, "n_neg": 15},
-    4: {"epochs": 5, "lr": 1e-5, "n_neg": 5},
+    4: {"epochs": 3, "lr": 5e-6, "n_neg": 5},
 }
 
 def set_seed(seed=666):
