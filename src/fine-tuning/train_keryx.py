@@ -10,16 +10,19 @@ from transformers import AutoModelForSequenceClassification
 from pathlib import Path
 
 
-DATASET_PATH = "../../data/sets_to_learn/dataset_hier721.json"
+DATASET_PATH = "../../data/sets_to_learn/dataset_hier720_uped.json"
 CATS2_PATH = "../../data/classifier/cats2.json"
-GERACL_PATH  = "../../models/GeRaCl-USER2-base"
-OUTPUT_DIR   = "../../models/GeRaCl-finetuned721_v2"
+USER2_PATH = "../../models/USER2-base"
+OUTPUT_DIR   = "../../models/KERYX_720p"
 
-EPOCHS = 10
 BATCH_SIZE = 16
-LR = 2e-5
-MAX_LEN = 512
-N_NEGATIVES_PER_SAMPLE = 15
+MAX_LEN = 256
+
+LEVEL_CONFIG = {
+    2: {"epochs": 5, "lr": 2e-5, "n_neg": 20},
+    3: {"epochs": 5, "lr": 2e-5, "n_neg": 15},
+    4: {"epochs": 5, "lr": 1e-5, "n_neg": 5},
+}
 
 def set_seed(seed=666):
     random.seed(seed)
@@ -46,9 +49,21 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, l2_candidates
                 continue
 
             scores = []
+            if level == 2:
+                prefix = ""
+            elif level == 3:
+                l2_parts = r["true_l2"].split(" ", 1)
+                prefix = (l2_parts[1] if len(l2_parts) > 1 else l2_parts[0]) + " → "
+            else:
+                l2_parts = r["true_l2"].split(" ", 1)
+                l2_name = l2_parts[1] if len(l2_parts) > 1 else l2_parts[0]
+                l3_parts = r["true_l3"].split(" ", 1)
+                l3_name = l3_parts[1] if len(l3_parts) > 1 else l3_parts[0]
+                prefix = f"{l2_name} → {l3_name} → "
+
             for c in candidates:
                 enc = tokenizer(
-                    r["summary"], c["name"],
+                    r["summary"], prefix + c["name"],
                     return_tensors="pt",
                     truncation=True,
                     max_length=MAX_LEN
@@ -63,7 +78,7 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, l2_candidates
     return correct / total if total > 0 else 0.0
 
 class NLIDataset(Dataset):
-    def __init__(self, records, level: int, tokenizer, max_len: int, l2_candidates=None):
+    def __init__(self, records, level: int, tokenizer, max_len: int, l2_candidates=None, n_neg=15):
         self.samples = []
         self.tokenizer = tokenizer
         self.max_len = max_len
@@ -77,10 +92,13 @@ class NLIDataset(Dataset):
             else:
                 candidates = r.get(f"candidates_{lvl}")
                 if level == 3:
-                    prefix = r["true_l2"].split(" ", 1)[1] + " → "
+                    l2_parts = r["true_l2"].split(" ", 1)
+                    prefix = (l2_parts[1] if len(l2_parts) > 1 else l2_parts[0]) + " → "
                 else:
-                    l2_name = r["true_l2"].split(" ", 1)[1]
-                    l3_name = r["true_l3"].split(" ", 1)[1]
+                    l2_parts = r["true_l2"].split(" ", 1)
+                    l2_name = l2_parts[1] if len(l2_parts) > 1 else l2_parts[0]
+                    l3_parts = r["true_l3"].split(" ", 1)
+                    l3_name = l3_parts[1] if len(l3_parts) > 1 else l3_parts[0]
                     prefix = f"{l2_name} → {l3_name} → "
 
             parts = r[f"true_{lvl}"].split(" ", 1)
@@ -92,7 +110,7 @@ class NLIDataset(Dataset):
             self.samples.append((summary, prefix + true_name, 0))
 
             negs = [c["name"] for c in candidates if c["code"] != true_code]
-            negs_sample = random.sample(negs, min(N_NEGATIVES_PER_SAMPLE, len(negs)))
+            negs_sample = random.sample(negs, min(n_neg, len(negs)))
             for neg in negs_sample:
                 self.samples.append((summary, prefix + neg, 1))
 
@@ -115,9 +133,12 @@ class NLIDataset(Dataset):
         }
 
 def train(level: int):
-    print(f"Обучаем GeRaCl-L{level}")
+    print(f"Обучаем KERYX-L{level}")
 
     set_seed()
+    cfg = LEVEL_CONFIG[level]
+    EPOCHS = cfg["epochs"]
+    LR = cfg["lr"]
 
     with open(DATASET_PATH, encoding="utf-8") as f:
         records = json.load(f)
@@ -130,13 +151,13 @@ def train(level: int):
     with open(CATS2_PATH, encoding="utf-8") as f:
         l2_candidates = json.load(f)["categories"]
 
-    tokenizer = AutoTokenizer.from_pretrained(GERACL_PATH)
+    tokenizer = AutoTokenizer.from_pretrained(USER2_PATH)
 
     model = AutoModelForSequenceClassification.from_pretrained(
-        "deepvk/USER2-base", num_labels=2
+        USER2_PATH, num_labels=2
     ).to("cuda")
 
-    dataset = NLIDataset(train_rec, level, tokenizer, MAX_LEN, l2_candidates)
+    dataset = NLIDataset(train_rec, level, tokenizer, MAX_LEN, l2_candidates, n_neg=cfg["n_neg"])
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
     optimizer = AdamW(model.parameters(), lr=LR)

@@ -1,7 +1,7 @@
 import json
 
 input_file = "../../data/sets_to_learn/dataset_hier721_prompt2.json"
-output_file = "../../data/sets_to_learn/dataset_hier721_uped.json"
+output_file = "../../data/sets_to_learn/dataset_hier720_uped.json"
 
 with open(input_file, 'r', encoding='utf-8') as f:
     data = json.load(f)
