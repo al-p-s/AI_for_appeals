@@ -10,10 +10,10 @@ from transformers import AutoModelForSequenceClassification
 from pathlib import Path
 
 
-DATASET_PATH = "../../data/sets_to_learn/dataset_hier720_uped.json"
+DATASET_PATH = "../../data/sets_to_learn/dataset_hier720_v3.json"
 CATS2_PATH = "../../data/classifier/cats2.json"
 USER2_PATH = "../../models/USER2-base"
-OUTPUT_DIR   = "../../models/KERYX_720p"
+OUTPUT_DIR   = "../../models/KERYX_720p2"
 
 BATCH_SIZE = 16
 MAX_LEN = 256
@@ -21,7 +21,7 @@ MAX_LEN = 256
 LEVEL_CONFIG = {
     2: {"epochs": 5, "lr": 2e-5, "n_neg": 20},
     3: {"epochs": 5, "lr": 2e-5, "n_neg": 15},
-    4: {"epochs": 3, "lr": 5e-6, "n_neg": 5},
+    4: {"epochs": 4, "lr": 5e-6, "n_neg": 7},
 }
 
 def set_seed(seed=666):

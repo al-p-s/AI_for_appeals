@@ -2,21 +2,19 @@ import json
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 
-APPEALS_CATS_PATH = "../../data/sets_to_learn/appeals_w_cats/appeals_w_cats721.json"
-CATS_L2_PATH      = "../../data/classifier/cats2.json"
-CATS_L3_PATH      = "../../data/classifier/cats3.json"
-CATS_L4_PATH      = "../../data/classifier/cats4.json"
-OUTPUT_PATH       = "../../data/sets_to_learn/dataset_hier721_prompt2.json"
-GIGACHAT_PATH     = "../../models/gigaChat_lite"
-# MAX_NEW_TOKENS    = 80
-EVAL_LIMIT        = None
+APPEALS_CATS_PATH = "../../data/sets_to_learn/appeals_w_cats/appeals_w_cats720.json"
+CATS_L2_PATH = "../../data/classifier/cats2.json"
+CATS_L3_PATH = "../../data/classifier/cats3.json"
+CATS_L4_PATH = "../../data/classifier/cats4.json"
+OUTPUT_PATH = "../../data/sets_to_learn/dataset_hier720_v3.json"
+GIGACHAT_PATH = "../../models/gigaChat_lite"
+EVAL_LIMIT = None
 
 SUMM_PROMPT = """Ты — эксперт по суммаризации обращений граждан. Напиши выжимку в 1-2 предложения, строго по правилам:
 
 1. Не повторяй: ФИО (пиши «житель», «жительница» или «заявитель»), номер документа, телефон, email, социальное положение, входящие номера, приветствия и подписи.
 2. Отрази суть: КТО (житель такого-то района/улицы) → ЧТО ПРОСИТ или НА ЧТО ЖАЛУЕТСЯ → ПОЧЕМУ (одна-две главные причины).
 3. Говори коротко, без канцелярита («просит согласовать», «требует уборки», «выражает негодование» вместо «прошу обеспечить проведение мероприятий»).
-4. Не используй терминологию Классификатора обращений — она нужна для классификации, а не для выжимки.
 
 ОБРАЩЕНИЕ:
 {text}"""
@@ -35,7 +33,6 @@ def load_gigachat() -> tuple:
         torch_dtype=torch.bfloat16,
     )
     gen_config = GenerationConfig.from_pretrained(GIGACHAT_PATH, trust_remote_code=True)
-    # gen_config.max_new_tokens = MAX_NEW_TOKENS
     gen_config.do_sample = False
     return tokenizer, model, gen_config
 
@@ -62,9 +59,24 @@ def main():
     with open(APPEALS_CATS_PATH, encoding="utf-8") as f:
         appeals = json.load(f)["appeals"]
     text_by_file = {a["file_name"]: a["text"] for a in appeals}
-    cats_l2 = json.load(open(CATS_L2_PATH, encoding="utf-8"))["categories"]
+
     cats_l3 = json.load(open(CATS_L3_PATH, encoding="utf-8"))["categories"]
     cats_l4 = json.load(open(CATS_L4_PATH, encoding="utf-8"))["categories"]
+
+    name_l2 = {}
+    name_l3 = {c["code"]: c["name"] for c in cats_l3}
+    name_l4 = {c["code"]: c["name"] for c in cats_l4}
+
+    for c in cats_l3:
+        l2_code = get_prefix(c["code"], 2)
+        if l2_code not in name_l2:
+            name_l2[l2_code] = ""
+
+    try:
+        cats_l2_list = json.load(open(CATS_L2_PATH, encoding="utf-8"))["categories"]
+        name_l2 = {c["code"]: c["name"] for c in cats_l2_list}
+    except FileNotFoundError:
+        pass
 
     if EVAL_LIMIT:
         appeals = appeals[:EVAL_LIMIT]
@@ -79,11 +91,14 @@ def main():
             print(f"[{i+1}] {file_name} — нет текста, пропуск")
             continue
 
-        # Берём первую категорию (multi-label потом)
         true_code = appeal["categories"][0].split(" ")[0]
-        true_l2 = get_prefix(true_code, 2)
-        true_l3 = get_prefix(true_code, 3)
-        true_l4 = true_code
+        true_l2_code = get_prefix(true_code, 2)
+        true_l3_code = get_prefix(true_code, 3)
+        true_l4_code = true_code
+
+        true_l2 = f"{true_l2_code} {name_l2.get(true_l2_code, '')}".strip()
+        true_l3 = f"{true_l3_code} {name_l3.get(true_l3_code, '')}".strip()
+        true_l4 = f"{true_l4_code} {name_l4.get(true_l4_code, '')}".strip()
 
         print(f"[{i+1}/{len(appeals)}] {file_name} → суммаризация...")
         summary = summarize(text, tokenizer, model, gen_config)
@@ -95,9 +110,8 @@ def main():
             "true_l2":        true_l2,
             "true_l3":        true_l3,
             "true_l4":        true_l4,
-            "candidates_l2":  cats_l2,
-            "candidates_l3":  children(cats_l3, true_l2, 2),
-            "candidates_l4":  children(cats_l4, true_l3, 3),
+            "candidates_l3":  children(cats_l3, true_l2_code, 2),
+            "candidates_l4":  children(cats_l4, true_l3_code, 3),
         })
 
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:

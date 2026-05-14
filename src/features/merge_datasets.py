@@ -2,7 +2,7 @@ import json
 
 A = r"../../data/sets_to_learn/appeals_w_cats/chel_appeals_w_cats.json"
 B = r"../../data/sets_to_learn/appeals_w_cats/ekat_appeals_w_cats.json"
-OUT = r"../../data/sets_to_learn/appeals_w_cats/appeals_w_cats721.json"
+OUT = r"../../data/sets_to_learn/appeals_w_cats/appeals_w_cats720.json"
 
 with open(A, encoding="utf-8") as f:
     a = json.load(f)["appeals"]

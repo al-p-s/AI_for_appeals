@@ -4,7 +4,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, 
 from transformers import AutoModelForSequenceClassification
 import torch
 
-APPEALS_PATH = "../../data/sets_to_learn/appeals_w_cats/appeals_w_cats721.json"
+APPEALS_PATH = "../../data/sets_to_learn/appeals_w_cats/appeals_w_cats720.json"
 CATS_L2 = "../../data/classifier/cats2.json"
 CATS_L3 = "../../data/classifier/cats3.json"
 CATS_L4 = "../../data/classifier/cats4.json"

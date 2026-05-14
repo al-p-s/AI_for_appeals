@@ -1,7 +1,7 @@
 # import json
 #
 # input_file = "../../data/sets_to_learn/dataset_hier721_prompt2.json"
-# output_file = "../../data/sets_to_learn/dataset_hier720_uped.json"
+# output_file = "../../data/sets_to_learn/dataset_hier720_v2.json"
 #
 # with open(input_file, 'r', encoding='utf-8') as f:
 #     data = json.load(f)
@@ -16,11 +16,11 @@
 # print(f"Готово! Результат сохранён в {output_file}")
 import json
 
-DATASET_PATH = "../../data/sets_to_learn/dataset_hier720_uped.json"
+DATASET_PATH = "../../data/sets_to_learn/dataset_hier720_v2.json"
 CATS2_PATH = "../../data/classifier/cats2.json"
 CATS3_PATH = "../../data/classifier/cats3.json"
 CATS4_PATH = "../../data/classifier/cats4.json"
-OUTPUT_PATH = "../../data/sets_to_learn/dataset_hier720_uped.json"
+OUTPUT_PATH = "../../data/sets_to_learn/dataset_hier720_v2.json"
 
 with open(DATASET_PATH, encoding="utf-8") as f:
     dataset = json.load(f)
