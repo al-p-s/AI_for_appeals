@@ -13,7 +13,7 @@ from pathlib import Path
 DATASET_PATH = "../../data/sets_to_learn/dataset_hier720_v3.json"
 CATS2_PATH = "../../data/classifier/cats2.json"
 USER2_PATH = "../../models/USER2-base"
-OUTPUT_DIR   = "../../models/KERYX_720p2"
+OUTPUT_DIR = "../../models/KERYX_720p2"
 
 BATCH_SIZE = 16
 MAX_LEN = 256

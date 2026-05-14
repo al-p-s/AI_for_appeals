@@ -10,9 +10,9 @@ CATS_L3 = "../../data/classifier/cats3.json"
 CATS_L4 = "../../data/classifier/cats4.json"
 
 GIGACHAT_PATH = "../../models/gigaChat_lite"
-GERACL_PATH_L2 = "../../models/GeRaCl-finetuned721_v2/L2"
-GERACL_PATH_L3 = "../../models/GeRaCl-finetuned721_v2/L3"
-GERACL_PATH_L4 = "../../models/GeRaCl-finetuned721_v2/L4"
+KERYX_PATH_L2 = "../../models/KERYX_720p2/L2"
+KERYX_PATH_L3 = "../../models/KERYX_720p2/L3"
+KERYX_PATH_L4 = "../../models/KERYX_720p2/L4"
 
 # MAX_NEW_TOKENS = 80
 EVAL_LIMIT = None
@@ -23,7 +23,6 @@ SUMM_PROMPT = """Ты — эксперт по суммаризации обра�
 1. Не повторяй: ФИО (пиши «житель», «жительница» или «заявитель»), номер документа, телефон, email, социальное положение, входящие номера, приветствия и подписи.
 2. Отрази суть: КТО (житель такого-то района/улицы) → ЧТО ПРОСИТ или НА ЧТО ЖАЛУЕТСЯ → ПОЧЕМУ (одна-две главные причины).
 3. Говори коротко, без канцелярита («просит согласовать», «требует уборки», «выражает негодование» вместо «прошу обеспечить проведение мероприятий»).
-4. Не используй терминологию Классификатора обращений — она нужна для классификации, а не для выжимки.
 
 ОБРАЩЕНИЕ:
 {text}"""
@@ -49,7 +48,7 @@ def load_gigachat() -> tuple:
     generation_config.do_sample = False
     return tokenizer, model, generation_config
 
-def load_geracl(path):
+def load_keryx(path):
     tokenizer = AutoTokenizer.from_pretrained(path)
     model = AutoModelForSequenceClassification.from_pretrained(path).to("cuda").eval()
     return tokenizer, model
@@ -98,10 +97,10 @@ def main():
     print("Загружаем GigaChat-Lite...")
     gigachat_tok, gigachat_model, gigachat_gen = load_gigachat()
 
-    print("Загружаем GeRaCl...")
-    geracl_l2 = load_geracl(GERACL_PATH_L2)
-    geracl_l3 = load_geracl(GERACL_PATH_L3)
-    geracl_l4 = load_geracl(GERACL_PATH_L4)
+    print("Загружаем KERYX...")
+    keryx_l2 = load_keryx(KERYX_PATH_L2)
+    keryx_l3 = load_keryx(KERYX_PATH_L3)
+    keryx_l4 = load_keryx(KERYX_PATH_L4)
 
     total = 0
     correct = {2: 0, 3: 0, 4: 0}
@@ -123,15 +122,15 @@ def main():
         summary = summarize(text, gigachat_tok, gigachat_model, gigachat_gen)
 
         cands_l2 = cats_l2
-        pred_l2 = classify_level(summary, cands_l2, geracl_l2)
+        pred_l2 = classify_level(summary, cands_l2, keryx_l2)
         ok_l2 = pred_l2 == true_l2
 
         cands_l3 = children(cats_l3, pred_l2, 2)
-        pred_l3 = classify_level(summary, cands_l3, geracl_l3) if cands_l3 else pred_l2
+        pred_l3 = classify_level(summary, cands_l3, keryx_l3) if cands_l3 else pred_l2
         ok_l3 = pred_l3 == true_l3
 
         cands_l4 = children(cats_l4, pred_l3, 3)
-        pred_l4 = classify_level(summary, cands_l4, geracl_l4) if cands_l4 else pred_l3
+        pred_l4 = classify_level(summary, cands_l4, keryx_l4) if cands_l4 else pred_l3
         ok_l4 = pred_l4 == true_l4
 
         total += 1
