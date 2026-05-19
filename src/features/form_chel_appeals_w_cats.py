@@ -3,9 +3,9 @@ import os
 import glob
 from pathlib import Path
 
-APPEALS_JSON = r"../../data/appeals_chelyabinsk_SASHKA.json"
+APPEALS_JSON = r"../../data/appeals_350_SASHKA.json"
 CATS_DIR = r"D:\Обращения\chel_cats"
-OUTPUT_JSON = r"../../data/chel_appeals_with_cats.json"
+OUTPUT_JSON = r"../../data/sets_to_learn/appeals_w_cats/chel_appeals_with_cats350_TEMPO.json"
 
 def load_appeals(path: str) -> dict[str, str]:
     with open(path, encoding="utf-8") as f:
