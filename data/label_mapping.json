@@ -5,7 +5,8 @@
     "B-FIRST_NAME": 3, "I-FIRST_NAME": 4,
     "B-MIDDLE_NAME": 5, "I-MIDDLE_NAME": 6,
     "B-PERSONAL_EMAIL": 7, "I-PERSONAL_EMAIL": 8,
-    "B-GOV_EMAIL": 9, "I-GOV_EMAIL": 10
+    "B-GOV_EMAIL": 9, "I-GOV_EMAIL": 10,
+    "B-PHONE_NUMBER": 11, "I-PHONE_NUMBER": 12
   },
   "id2label": {
     "0": "O",
@@ -13,6 +14,7 @@
     "3": "B-FIRST_NAME", "4": "I-FIRST_NAME",
     "5": "B-MIDDLE_NAME", "6": "I-MIDDLE_NAME",
     "7": "B-PERSONAL_EMAIL", "8": "I-PERSONAL_EMAIL",
-    "9": "B-GOV_EMAIL", "10": "I-GOV_EMAIL"
+    "9": "B-GOV_EMAIL", "10": "I-GOV_EMAIL",
+    "11": "B-PHONE_NUMBER", "12": "I-PHONE_NUMBER"
   }
 }

@@ -16,13 +16,14 @@ class LabelStudioToBIOConverter:
             "B-MIDDLE_NAME", "I-MIDDLE_NAME",
             "B-PERSONAL_EMAIL", "I-PERSONAL_EMAIL",
             "B-GOV_EMAIL", "I-GOV_EMAIL",
+            "B-PHONE_NUMBER", "I-PHONE_NUMBER",
         ]
 
         self.label2id = {label: i for i, label in enumerate(self.labels)}
         self.id2label = {i: label for label, i in self.label2id.items()}
 
     def tokenize_with_positions(self, text: str) -> List[Tuple[str, int, int]]:
-        pattern = r'\w+@\w+\.\w+|\w+|[^\w\s]'
+        pattern = r'\w+@\w+\.\w+|\+?[\d\-\(\)\s]{7,}|\w+|[^\w\s]'
         tokens = []
         for match in re.finditer(pattern, text):
             tokens.append((match.group(), match.start(), match.end()))
@@ -49,6 +50,10 @@ class LabelStudioToBIOConverter:
             label = entity['value']['labels'][0]
             start = entity['value']['start']
             end = entity['value']['end']
+
+            # Пропускаем метки, которых нет в нашем словаре
+            if f"B-{label}" not in self.label2id:
+                continue
 
             token_indices = self.find_token_indices(tokens_with_pos, start, end)
 
@@ -97,8 +102,8 @@ class LabelStudioToBIOConverter:
             json.dump(examples, f, ensure_ascii=False, indent=2)
 
 
-input_file = "../../data/appeals_with_marks.json"
-output_file = "../../data/training_data_bio.json"
+input_file = "../../data/appeals_with_marks_MISHA.json"
+output_file = "../../data/training_data_bio_MISHA.json"
 
 converter = LabelStudioToBIOConverter(input_file)
 examples, stats = converter.convert_all()
