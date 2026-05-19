@@ -78,12 +78,13 @@ def compute_metrics(eval_preds):
 
 training_args = TrainingArguments(
     output_dir="../../models/train_NER_RuModernBert",
-    num_train_epochs=10,
+    num_train_epochs=6,
     per_device_train_batch_size=4,
     per_device_eval_batch_size=8,
     learning_rate=3e-5,
-    weight_decay=0.01,
-    warmup_steps=50,
+    weight_decay=0.005,
+    warmup_steps=100,
+    lr_scheduler_type="cosine",
     eval_strategy="epoch",
     save_strategy="epoch",
     save_total_limit=3,
