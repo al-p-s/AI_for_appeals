@@ -10,10 +10,10 @@ from transformers import AutoModelForSequenceClassification
 from pathlib import Path
 
 
-DATASET_PATH = "../../data/sets_to_learn/dataset_hier720_v3.json"
+DATASET_PATH = "../../data/sets_to_learn/dataset_hier1068_multi.json"
 CATS2_PATH = "../../data/classifier/cats2.json"
 USER2_PATH = "../../models/USER2-base"
-OUTPUT_DIR = "../../models/KERYX_720p2"
+OUTPUT_DIR = "../../models/KERYX_1068_solo"
 
 BATCH_SIZE = 16
 MAX_LEN = 256
@@ -36,13 +36,14 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, l2_candidates
 
     with torch.no_grad():
         for r in records:
-            parts = r[f"true_l{level}"].split(" ", 1)
+            parts = r[f"true_l{level}"][0].split(" ", 1)
             true_code = parts[0]
 
             if level == 2:
                 candidates = l2_candidates
             else:
-                candidates = r.get(f"candidates_l{level}")
+                candidates_raw = r.get(f"candidates_l{level}", {})
+                candidates = [c for lst in candidates_raw.values() for c in lst]
 
             if not candidates:
                 total -= 1
@@ -52,12 +53,12 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, l2_candidates
             if level == 2:
                 prefix = ""
             elif level == 3:
-                l2_parts = r["true_l2"].split(" ", 1)
+                l2_parts = r["true_l2"][0].split(" ", 1)
                 prefix = (l2_parts[1] if len(l2_parts) > 1 else l2_parts[0]) + " → "
             else:
-                l2_parts = r["true_l2"].split(" ", 1)
+                l2_parts = r["true_l2"][0].split(" ", 1)
                 l2_name = l2_parts[1] if len(l2_parts) > 1 else l2_parts[0]
-                l3_parts = r["true_l3"].split(" ", 1)
+                l3_parts = r["true_l3"][0].split(" ", 1)
                 l3_name = l3_parts[1] if len(l3_parts) > 1 else l3_parts[0]
                 prefix = f"{l2_name} → {l3_name} → "
 
@@ -90,18 +91,19 @@ class NLIDataset(Dataset):
                 candidates = l2_candidates
                 prefix = ""
             else:
-                candidates = r.get(f"candidates_{lvl}")
+                candidates_raw = r.get(f"candidates_{lvl}", {})
+                candidates = [c for lst in candidates_raw.values() for c in lst]
                 if level == 3:
-                    l2_parts = r["true_l2"].split(" ", 1)
+                    l2_parts = r["true_l2"][0].split(" ", 1)
                     prefix = (l2_parts[1] if len(l2_parts) > 1 else l2_parts[0]) + " → "
                 else:
-                    l2_parts = r["true_l2"].split(" ", 1)
+                    l2_parts = r["true_l2"][0].split(" ", 1)
                     l2_name = l2_parts[1] if len(l2_parts) > 1 else l2_parts[0]
-                    l3_parts = r["true_l3"].split(" ", 1)
+                    l3_parts = r["true_l3"][0].split(" ", 1)
                     l3_name = l3_parts[1] if len(l3_parts) > 1 else l3_parts[0]
                     prefix = f"{l2_name} → {l3_name} → "
 
-            parts = r[f"true_{lvl}"].split(" ", 1)
+            parts = r[f"true_{lvl}"][0].split(" ", 1)
             true_code = parts[0]
             true_name = parts[1] if len(parts) > 1 else next((c["name"] for c in candidates if c["code"] == true_code), None)
             if not true_name:
@@ -207,7 +209,7 @@ def train(level: int):
             best_val_cls_acc = val_cls_acc
             model.save_pretrained(str(out_path))
             tokenizer.save_pretrained(str(out_path))
-            print(f"  ✓ Сохранена лучшая модель (val_cls_acc={val_cls_acc:.4f})")
+            print(f"  [UPD] Сохранена лучшая модель (val_cls_acc={val_cls_acc:.4f})")
 
         model.train()
 
