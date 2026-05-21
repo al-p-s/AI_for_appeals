@@ -62,7 +62,8 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, name_by_l2_co
                 has_valid = False
                 record_jaccard = 0.0
                 record_jaccard_count = 0
-                record_partial = True
+                record_partial_count = 0
+                record_partial_hit = 0
                 for true_l2_str in r["true_l2"]:
                     l2_parts = true_l2_str.split(" ", 1)
                     l2_code = l2_parts[0]
@@ -85,8 +86,9 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, name_by_l2_co
                     top_n = {candidates[i]["code"] for i in sorted(range(len(scores)), key=lambda x: -scores[x])[:n]}
                     if top_n != true_codes:
                         record_correct = False
-                    if not (top_n & true_codes):
-                        record_partial = False
+                    record_partial_count += 1
+                    if top_n & true_codes:
+                        record_partial_hit += 1
                     if true_codes | top_n:
                         record_jaccard += len(top_n & true_codes) / len(top_n | true_codes)
                         record_jaccard_count += 1
@@ -94,8 +96,8 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, name_by_l2_co
                     total += 1
                     if record_correct:
                         correct += 1
-                    if record_partial:
-                        partial_correct += 1
+                    if record_partial_count > 0:
+                        partial_correct += record_partial_hit / record_partial_count
                     if record_jaccard_count:
                         jaccard_sum += record_jaccard / record_jaccard_count
                 continue
@@ -105,7 +107,8 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, name_by_l2_co
                 has_valid = False
                 record_jaccard = 0.0
                 record_jaccard_count = 0
-                record_partial = True
+                record_partial_count = 0
+                record_partial_hit = 0
                 for true_l3_str in r["true_l3"]:
                     l3_parts = true_l3_str.split(" ", 1)
                     l3_code = l3_parts[0]
@@ -132,8 +135,9 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, name_by_l2_co
                     top_n = {candidates[i]["code"] for i in sorted(range(len(scores)), key=lambda x: -scores[x])[:n]}
                     if top_n != true_codes:
                         record_correct = False
-                    if not (top_n & true_codes):
-                        record_partial = False
+                    record_partial_count += 1
+                    if top_n & true_codes:
+                        record_partial_hit += 1
                     if true_codes | top_n:
                         record_jaccard += len(top_n & true_codes) / len(top_n | true_codes)
                         record_jaccard_count += 1
@@ -141,8 +145,8 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, name_by_l2_co
                     total += 1
                     if record_correct:
                         correct += 1
-                    if record_partial:
-                        partial_correct += 1
+                    if record_partial_count > 0:
+                        partial_correct += record_partial_hit / record_partial_count
                     if record_jaccard_count:
                         jaccard_sum += record_jaccard / record_jaccard_count
                 continue
