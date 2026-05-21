@@ -3,9 +3,9 @@ import json
 
 from src.features.text_extractor import pdf_extract
 
-directory = r'C:/appeals/appeals_350_sasha/appeals_350_sasha'
+directory = r'C:/appeals/appeals_100test_sasha'
 files = os.listdir(directory)
-json_path = "../../data/appeals_350_SASHKA.json"
+json_path = "../../data/appeals_100_test_sasha.json"
 
 all_appeals = []
 
