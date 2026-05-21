@@ -13,7 +13,7 @@ from pathlib import Path
 DATASET_PATH = "../../data/sets_to_learn/dataset_hier1068_multi.json"
 CATS2_PATH = "../../data/classifier/cats2.json"
 USER2_PATH = "../../models/USER2-base"
-OUTPUT_DIR = "../../models/KERYX_1068_multi_fin"
+OUTPUT_DIR = "../../models/KERYX_1068_multi"
 
 BATCH_SIZE = 16
 MAX_LEN = 256
@@ -33,6 +33,8 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, name_by_l2_co
     model.eval()
     correct = 0
     total = 0
+    jaccard_sum = 0.0
+    partial_correct = 0
 
     with torch.no_grad():
         for r in records:
@@ -51,8 +53,16 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, name_by_l2_co
                 top_n = {candidates[i]["code"] for i in sorted(range(len(scores)), key=lambda x: -scores[x])[:n]}
                 if top_n == true_codes:
                     correct += 1
+                jaccard_sum += len(top_n & true_codes) / len(top_n | true_codes)
+                if top_n & true_codes:
+                    partial_correct += 1
 
             elif level == 3:
+                record_correct = True
+                has_valid = False
+                record_jaccard = 0.0
+                record_jaccard_count = 0
+                record_partial = True
                 for true_l2_str in r["true_l2"]:
                     l2_parts = true_l2_str.split(" ", 1)
                     l2_code = l2_parts[0]
@@ -61,7 +71,7 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, name_by_l2_co
                     candidates = r.get("candidates_l3", {}).get(l2_code, [])
                     if not candidates:
                         continue
-                    total += 1
+                    has_valid = True
                     true_codes = {
                         s.split(" ")[0] for s in r["true_l3"]
                         if s.split(" ")[0].startswith(".".join(l2_code.split(".")[:2]))
@@ -69,18 +79,33 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, name_by_l2_co
                     n = len(true_codes)
                     scores = []
                     for c in candidates:
-                        enc = tokenizer(
-                            r["summary"], prefix + c["name"],
-                            return_tensors="pt", truncation=True, max_length=MAX_LEN
-                        ).to(device)
-                        logits = model(**enc).logits
-                        scores.append(logits[0, 0].item())
+                        enc = tokenizer(r["summary"], prefix + c["name"],
+                                        return_tensors="pt", truncation=True, max_length=MAX_LEN).to(device)
+                        scores.append(model(**enc).logits[0, 0].item())
                     top_n = {candidates[i]["code"] for i in sorted(range(len(scores)), key=lambda x: -scores[x])[:n]}
-                    if top_n == true_codes:
+                    if top_n != true_codes:
+                        record_correct = False
+                    if not (top_n & true_codes):
+                        record_partial = False
+                    if true_codes | top_n:
+                        record_jaccard += len(top_n & true_codes) / len(top_n | true_codes)
+                        record_jaccard_count += 1
+                if has_valid:
+                    total += 1
+                    if record_correct:
                         correct += 1
+                    if record_partial:
+                        partial_correct += 1
+                    if record_jaccard_count:
+                        jaccard_sum += record_jaccard / record_jaccard_count
                 continue
 
             else:  # level == 4
+                record_correct = True
+                has_valid = False
+                record_jaccard = 0.0
+                record_jaccard_count = 0
+                record_partial = True
                 for true_l3_str in r["true_l3"]:
                     l3_parts = true_l3_str.split(" ", 1)
                     l3_code = l3_parts[0]
@@ -90,7 +115,7 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, name_by_l2_co
                     candidates = r.get("candidates_l4", {}).get(l3_code, [])
                     if not candidates:
                         continue
-                    total += 1
+                    has_valid = True
                     true_codes = {
                         s.split(" ")[0] for s in r["true_l4"]
                         if s.split(" ")[0].startswith(".".join(l3_code.split(".")[:3]))
@@ -105,14 +130,31 @@ def compute_cls_accuracy(records, model, tokenizer, level, device, name_by_l2_co
                         logits = model(**enc).logits
                         scores.append(logits[0, 0].item())
                     top_n = {candidates[i]["code"] for i in sorted(range(len(scores)), key=lambda x: -scores[x])[:n]}
-                    if top_n == true_codes:
+                    if top_n != true_codes:
+                        record_correct = False
+                    if not (top_n & true_codes):
+                        record_partial = False
+                    if true_codes | top_n:
+                        record_jaccard += len(top_n & true_codes) / len(top_n | true_codes)
+                        record_jaccard_count += 1
+                if has_valid:
+                    total += 1
+                    if record_correct:
                         correct += 1
+                    if record_partial:
+                        partial_correct += 1
+                    if record_jaccard_count:
+                        jaccard_sum += record_jaccard / record_jaccard_count
                 continue
 
-    return correct / total if total > 0 else 0.0
+    return {
+        "exact": correct / total if total > 0 else 0.0,
+        "jaccard": jaccard_sum / total if total > 0 else 0.0,
+        "partial": partial_correct / total if total > 0 else 0.0,
+    }
 
 class NLIDataset(Dataset):
-    def __init__(self, records, level: int, tokenizer, max_len: int, l2_candidates=None, n_neg=15):
+    def __init__(self, records, level: int, tokenizer, max_len: int, l2_candidates=None, n_neg=15, name_by_l2_code=None):
         self.samples = []
         self.tokenizer = tokenizer
         self.max_len = max_len
@@ -168,8 +210,8 @@ class NLIDataset(Dataset):
                     l3_parts = true_l3_str.split(" ", 1)
                     l3_code = l3_parts[0]
                     l3_name = l3_parts[1] if len(l3_parts) > 1 else l3_parts[0]
-                    l2_parts = r["true_l2"][0].split(" ", 1)
-                    l2_name = l2_parts[1] if len(l2_parts) > 1 else l2_parts[0]
+                    l2_code_from_l3 = ".".join(l3_code.split(".")[:2]) + ".0000.0000"
+                    l2_name = name_by_l2_code.get(l2_code_from_l3, "")
                     prefix = f"{l2_name} → {l3_name} → "
                     candidates = r.get("candidates_l4", {}).get(l3_code, [])
                     if not candidates:
@@ -235,7 +277,7 @@ def train(level: int):
         USER2_PATH, num_labels=2
     ).to("cuda")
 
-    dataset = NLIDataset(train_rec, level, tokenizer, MAX_LEN, l2_candidates, n_neg=cfg["n_neg"])
+    dataset = NLIDataset(train_rec, level, tokenizer, MAX_LEN, l2_candidates, n_neg=cfg["n_neg"], name_by_l2_code=name_by_l2_code)
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
     optimizer = AdamW(model.parameters(), lr=LR)
@@ -278,22 +320,22 @@ def train(level: int):
         acc = correct / total * 100
         print(f"  Epoch {epoch+1}/{EPOCHS} | loss={total_loss/len(dataloader):.4f} | acc={acc:.1f}%")
 
-        val_cls_acc = compute_cls_accuracy(val_rec, model, tokenizer, level, "cuda", name_by_l2_code, l2_candidates)
-        print(f"  Val Cls Acc: {val_cls_acc:.4f}")
+        val_metrics = compute_cls_accuracy(val_rec, model, tokenizer, level, "cuda", name_by_l2_code, l2_candidates)
+        print(f"  Val: exact={val_metrics['exact']:.4f} jaccard={val_metrics['jaccard']:.4f} partial={val_metrics['partial']:.4f}")
 
-        if val_cls_acc > best_val_cls_acc:
-            best_val_cls_acc = val_cls_acc
+        if val_metrics['exact'] > best_val_cls_acc:
+            best_val_cls_acc = val_metrics['exact']
             model.save_pretrained(str(out_path))
             tokenizer.save_pretrained(str(out_path))
-            print(f"  [UPD] Best model saved (val_cls_acc={val_cls_acc:.4f})")
+            print(f"  [UPD] Best model saved (exact={val_metrics['exact']:.4f})")
 
         model.train()
 
     model = AutoModelForSequenceClassification.from_pretrained(str(out_path)).to("cuda")
     tokenizer = AutoTokenizer.from_pretrained(str(out_path))
 
-    test_cls_acc = compute_cls_accuracy(test_rec, model, tokenizer, level, "cuda", name_by_l2_code, l2_candidates)
-    print(f"  Test Classification Acc: {test_cls_acc:.4f}")
+    test_metrics = compute_cls_accuracy(test_rec, model, tokenizer, level, "cuda", name_by_l2_code, l2_candidates)
+    print(f"  Test: exact={test_metrics['exact']:.4f} jaccard={test_metrics['jaccard']:.4f} partial={test_metrics['partial']:.4f}")
 
 
 if __name__ == "__main__":
