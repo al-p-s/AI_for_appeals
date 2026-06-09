@@ -5,14 +5,14 @@ from extract_text import pdf_extract
 from single_inference import classify_text
 from ner_inference import extract_entities, format_ner_entities
 
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format="%(asctime)s | %(levelname)s | %(message)s",
-#     handlers=[
-#         logging.FileHandler("full_pipeline.log", encoding="utf-8"),
-#         logging.StreamHandler()
-#     ]
-# )
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    handlers=[
+        logging.FileHandler("full_pipeline.log", encoding="utf-8"),
+        logging.StreamHandler()
+    ]
+)
 
 logger = logging.getLogger(__name__)
 

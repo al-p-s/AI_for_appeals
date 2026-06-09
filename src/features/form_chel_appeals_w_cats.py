@@ -3,9 +3,9 @@ import os
 import glob
 from pathlib import Path
 
-APPEALS_JSON = r"../../data/appeals_350_SASHKA.json"
+APPEALS_JSON = r"../../data/appeals_99_test_sasha_NEW_OCR.json"
 CATS_DIR = r"D:\Обращения\chel_cats"
-OUTPUT_JSON = r"../../data/sets_to_learn/appeals_w_cats/chel_appeals_with_cats350_TEMPO.json"
+OUTPUT_JSON = r"../../data/sets_to_learn/appeals_w_cats/chel_appeals_with_cats99_test_NEW_OCR.json"
 
 def load_appeals(path: str) -> dict[str, str]:
     with open(path, encoding="utf-8") as f:
@@ -50,11 +50,8 @@ def build_dataset(appeals: dict, categories: dict) -> list[dict]:
 
     print(f"Собрано записей: {matched}")
     print(f"Нет категорий (TXT): {len(missing_cats)}")
-    print(f"Нет текста (JSON): {len(missing_text)}")
     if missing_cats:
         print("  Без категорий:", missing_cats[:10], "...")
-    if missing_text:
-        print("  Без текста:", missing_text[:10], "...")
 
     return dataset
 

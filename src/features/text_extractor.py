@@ -1,17 +1,18 @@
-import PyPDF2
-from pdfminer.high_level import extract_pages
-from pdfminer.layout import LTTextContainer, LTChar, LTFigure
-import pdfplumber
-from PIL import Image
-from pdf2image import convert_from_path
-import pytesseract
 import os
 import tempfile
 from dotenv import load_dotenv
 
+import pytesseract
+import pdfplumber
+import PyPDF2
+from pdfminer.high_level import extract_pages
+from pdfminer.layout import LTTextContainer, LTChar, LTFigure
+from pdf2image import convert_from_path
+from PIL import Image
+
 load_dotenv()
 
-pytesseract.pytesseract.tesseract_cmd = os.getenv('TESSERACT_CMD')
+pytesseract.pytesseract.tesseract_cmd = os.getenv('TESSERACT_CMD', 'tesseract')
 POPPLER_PATH = os.getenv('POPPLER_PATH')
 
 
@@ -24,13 +25,12 @@ def text_extraction(element):
                 if isinstance(character, LTChar):
                     line_formats.append(character.fontname)
                     line_formats.append(character.size)
-    return (line_text, list(set(line_formats)))
+    return line_text, list(set(line_formats))
 
 
 def extract_table(pdf_path, page_num, table_num):
     with pdfplumber.open(pdf_path) as pdf:
-        table = pdf.pages[page_num].extract_tables()[table_num]
-    return table
+        return pdf.pages[page_num].extract_tables()[table_num]
 
 
 def table_converter(table):
@@ -69,11 +69,12 @@ def find_table_for_element(element, page, tables):
 
 
 def image_to_text(image_path):
+    """Простой OCR без предобработки"""
     img = Image.open(image_path)
     return pytesseract.image_to_string(img, lang='rus+eng')
 
 
-def pdf_extract(pdf_path):
+def pdf_extract(pdf_path, dpi=200):
     all_content = []
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -97,7 +98,6 @@ def pdf_extract(pdf_path):
                         for i in range(len(tables))
                     ]
 
-                    current_table_idx = 0
                     added_tables = set()
 
                     page_elements = sorted(
@@ -121,20 +121,26 @@ def pdf_extract(pdf_path):
 
                         elif isinstance(element, LTFigure):
                             try:
-                                # Вырезаем изображение
+                                # Вырезаем область изображения (без deepcopy!)
                                 writer = PyPDF2.PdfWriter()
                                 pageObj.mediabox.lower_left = (element.x0, element.y0)
                                 pageObj.mediabox.upper_right = (element.x1, element.y1)
                                 writer.add_page(pageObj)
+
                                 with open(cropped_path, 'wb') as f:
                                     writer.write(f)
 
                                 images = convert_from_path(
                                     cropped_path,
-                                    poppler_path=POPPLER_PATH
+                                    dpi=dpi,
+                                    poppler_path=POPPLER_PATH,
+                                    fmt='png',
+                                    grayscale=True
                                 )
                                 images[0].save(image_path, 'PNG')
-                                page_content.append(image_to_text(image_path))
+                                ocr_text = image_to_text(image_path)
+                                if ocr_text.strip():
+                                    page_content.append(ocr_text)
                             except Exception as e:
                                 print(f"Ошибка при обработке изображения на стр. {pagenum}: {e}")
 

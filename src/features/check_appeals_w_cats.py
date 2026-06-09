@@ -37,7 +37,7 @@ def find_problematic_appeals(data: Dict[str, Any]) -> List[str]:
 
 
 if __name__ == "__main__":
-    file_path = "../../data/sets_to_learn/appeals_w_cats/appeals_w_cats1068.json"
+    file_path = "../../data/sets_to_learn/appeals_w_cats/chel_appeals_with_cats99_test.json"
 
     try:
         with open(file_path, "r", encoding="utf-8") as f:

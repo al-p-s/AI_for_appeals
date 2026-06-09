@@ -14,9 +14,9 @@ KERYX_PATH_L2 = "../../models/KERYX_1068_multi/L2"
 KERYX_PATH_L3 = "../../models/KERYX_1068_multi/L3"
 KERYX_PATH_L4 = "../../models/KERYX_1068_multi/L4"
 
-THRESHOLD_L2 = 0.7
-THRESHOLD_L3 = 0.6
-THRESHOLD_L4 = 0.6
+THRESHOLD_L2 = 0.9
+THRESHOLD_L3 = 0.85
+THRESHOLD_L4 = 0.8
 
 HARDCODED_TEXT = """
 Эбращение № 7320927 a\n\nДата дедлайна по исполнению: 17.03.2\n\n(©) Информация о гражданине Автоопределение @)\nФИО гражданина: ©. гитоево_ Татьяна Сергеевна s :\nЭлектронная почта: muvaveva— GU@ mail. ru\n\nНомер телефона: “s7sasov2795 = Ot -\n\n+7(952)501-27-95\n\nИНН гражданина:\n\nФИО обратившегося:\n\nАдрес обратившегося: |\n\nСекретно О да @ Her\n\n@ География обращения Автоопределение iif)\n\nАдрес источника\n\nФедеральный Округ\n\nРегион\n\nМуниципальное\nобразование\n\nАдрес\n\nМ источник обращения\n\nКанал\nПоток\n\nСобытие\n\nДАН И ОРГАНИЗАЦИЙ\nВходящий №2 8\n\n8 Информация об исполнителе 19.02 25\n\nОрганизация\n\n9 информация о волонтёре Обработка волонтёром: —\n\nВ Ход действий\n\nВолонтёры:\n\nBE текст обращения\nКоличество спама и обсценной лексики: 0 %\n\nМеня зовут Рассчитается Татьяна Сергеевна. Я звоню из города Челябинска. Я хотела бы попросить п\nомощи у Владимира Владимировича вопросе основе домов улицы Ярославская. Дом четырнадцать.\nДома давным давно в аварийном состоянии, уже практически нет подачи нормальной воды, отоплен\nие. Никто не занимается обслуживанием дома два РА, в том числе только управляющая компания бе\nрет деньги. Им каждый год обещают, что их расселят, но уже очень много лет их никто не расселяет д\nом, но уже стоит на ладан дышит. Вот я хотела бы попросить Владимира Владимировича как-то помо\nчь в решении этого вопроса и уже наконец то, чтобы их расстелили. Спасибо большое.\n\nСохранить\n\n\nсуо. организация | | |\n\nРешение исполнителя\n\nОтвет исполнителя : Развернуть\n\nТематика обращения\n\nТип категории\n\nКатегория обращения\n\nПодкатегория\nобращения\n\n[$] География гражданина Автоопределение ©)\n\nАдрес источника\nФедеральный Округ\n\nРегион\n\nМуниципальное\nобразование\n\nАдрес\n(®} Дополнительная информация\n\nСрочно: ©) Да @) Нет Обращались ранее: ©) Да ©) Нет\n\nВозраст на момент\nсоздания обращения\n\nОсобые метки сообщения: ap\n\nСистема-источник\n\n
@@ -31,16 +31,16 @@ SUMM_PROMPT = """Ты — эксперт по суммаризации обра�
 ОБРАЩЕНИЕ:
 {text}"""
 
-LOG_FILE = "full_pipeline.log"
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    handlers=[
-        logging.FileHandler(LOG_FILE, encoding="utf-8"),
-        logging.StreamHandler()
-    ]
-)
+# LOG_FILE = "full_pipeline.log"
+#
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format="%(asctime)s | %(levelname)s | %(message)s",
+#     handlers=[
+#         logging.FileHandler(LOG_FILE, encoding="utf-8"),
+#         logging.StreamHandler()
+#     ]
+# )
 
 logger = logging.getLogger(__name__)
 
@@ -98,9 +98,9 @@ def classify_level_multi(summary, candidates, tokenizer_model, threshold, prefix
             probs = torch.softmax(logits, dim=-1)
         scores.append((c, probs[0][0].item()))
 
-    # max_score = max(s for _, s in scores)
-    # result = [(c, s) for c, s in scores if s >= max_score * threshold]
-    result = [(c, s) for c, s in scores if s >= threshold]
+    # result = [(c, s) for c, s in scores if s >= threshold]
+    max_score = max(s for _, s in scores)
+    result = [(c, s) for c, s in scores if s >= max_score * threshold]
     logger.info(f"Classification finished | selected={len(result)}")
     if not result:
         result = [max(scores, key=lambda x: x[1])]
