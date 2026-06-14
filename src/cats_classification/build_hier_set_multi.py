@@ -1,20 +1,26 @@
 import json
 import torch
+import re
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
+
+from src.cats_classification.cut_extras import address_pattern
 
 APPEALS_CATS_PATH = "../../data/sets_to_learn/appeals_w_cats/appeals_w_cats1068.json"
 CATS_L2_PATH = "../../data/classifier/cats2.json"
 CATS_L3_PATH = "../../data/classifier/cats3.json"
 CATS_L4_PATH = "../../data/classifier/cats4.json"
-OUTPUT_PATH = "../../data/sets_to_learn/dataset_hier1068_multi.json"
+OUTPUT_PATH = "../../data/sets_to_learn/dataset_1068_v2.json"
 GIGACHAT_PATH = "../../models/gigaChat_lite"
 EVAL_LIMIT = None
 
-SUMM_PROMPT = """Ты — эксперт по суммаризации обращений граждан. Напиши выжимку в 1-2 предложения, строго по правилам:
+SUMM_PROMPT = """Ты — эксперт по обработке обращений граждан в органы власти. Напиши аннотацию строго в 2–3 предложения, избегая номеров, телефонов и приветствий.
+Что важно отразить:
+Категорию заявителя и адрес (только если они прямо названы в тексте), основную проблему: чего требует или на что жалуется заявитель.
+Ключевую причину/препятствие (почему возникла проблема или почему заявитель не может решить её сам), ожидаемый результат (что должно быть сделано по мнению заявителя).
 
-1. Не повторяй: ФИО (пиши «житель», «жительница» или «заявитель»), номер документа, телефон, email, социальное положение, входящие номера, приветствия и подписи.
-2. Отрази суть: КТО (житель такого-то района/улицы) → ЧТО ПРОСИТ или НА ЧТО ЖАЛУЕТСЯ → ПОЧЕМУ (одна-две главные причины).
-3. Говори коротко, без канцелярита («просит согласовать», «требует уборки», «выражает негодование» вместо «прошу обеспечить проведение мероприятий»).
+Важно: если каких-либо данных (адрес, категория) в тексте нет, не упоминай их.
+
+Стиль: сухой, без вводных слов и воды.
 
 ОБРАЩЕНИЕ:
 {text}"""
@@ -47,7 +53,28 @@ def summarize(text, tokenizer, model, gen_config) -> str:
     data.pop("token_type_ids", None)
     output_ids = model.generate(**data, generation_config=gen_config)[0]
     output_ids = output_ids[len(data["input_ids"][0]):]
-    return tokenizer.decode(output_ids, skip_special_tokens=True).strip()
+
+    summary = tokenizer.decode(output_ids, skip_special_tokens=True).strip()
+
+    prefix_pattern = re.compile(r'^\s*Эксперт по обработке обращений граждан в органы власти\.\s*', re.IGNORECASE)
+
+    address_pattern = re.compile(
+        r'(?:,\s*)?' # опциональная запятая перед
+        r'(?:\b(?:проживающ(?:ий|ая))\s+)?' # опционально "проживающий/проживающая"
+        r'по\s+адресу\s*:?\s*' # "по адресу" с опциональным двоеточием
+        r'\[(?:адрес\s*)?(?:не\s*указан|скрыт|данные\s*не\s*указаны|адрес)?\]' # [адрес], [адрес не указан] и т.д.
+        r'\s*[.,]?\s*',
+        re.IGNORECASE
+    )
+
+    summary = prefix_pattern.sub("", summary)
+    summary = address_pattern.sub("", summary)
+    summary = re.sub(r'\s{2,}', ' ', summary)
+    summary = re.sub(r'\s([.,])', r'\1', summary)
+
+    summary = summary.strip()
+
+    return summary
 
 
 def children(cats, parent_code, level):

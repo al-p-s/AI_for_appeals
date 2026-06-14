@@ -10,10 +10,10 @@ from transformers import AutoModelForSequenceClassification
 from pathlib import Path
 
 
-DATASET_PATH = "../../data/sets_to_learn/dataset_hier1068_multi.json"
+DATASET_PATH = "../../data/sets_to_learn/dataset_1068_v2_cleaned.json"
 CATS2_PATH = "../../data/classifier/cats2.json"
 USER2_PATH = "../../models/USER2-base"
-OUTPUT_DIR = "../../models/KERYX_1068_multi"
+OUTPUT_DIR = "../../models/KERYX_1068_multi_v2"
 
 BATCH_SIZE = 16
 MAX_LEN = 256
