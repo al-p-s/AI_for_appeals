@@ -13,7 +13,7 @@ from pathlib import Path
 DATASET_PATH = "../../data/sets_to_learn/dataset_1068_v2_cleaned.json"
 CATS2_PATH = "../../data/classifier/cats2.json"
 USER2_PATH = "../../models/USER2-base"
-OUTPUT_DIR = "../../models/KERYX_1068_multi_v2"
+OUTPUT_DIR = "../../models/KERYX_1068_multi_v2_jac2"
 
 BATCH_SIZE = 16
 MAX_LEN = 256
@@ -265,11 +265,14 @@ def train(level: int):
 
     with open(DATASET_PATH, encoding="utf-8") as f:
         records = json.load(f)
-        random.shuffle(records)
-        n = len(records)
-        train_rec = records[:int(n * 0.8)]
-        val_rec = records[int(n * 0.8):int(n * 0.9)]
-        test_rec = records[int(n * 0.9):]
+    random.seed()
+    random.shuffle(records)
+    n = len(records)
+    train_rec = records[:int(n * 0.9)]
+    val_rec = records[int(n * 0.9):]
+    # train_rec = records[:int(n * 0.8)]
+    # val_rec = records[int(n * 0.8):int(n * 0.9)]
+    # test_rec = records[int(n * 0.9):]
 
     with open(CATS2_PATH, encoding="utf-8") as f:
         l2_candidates = json.load(f)["categories"]
@@ -327,19 +330,21 @@ def train(level: int):
         val_metrics = compute_cls_accuracy(val_rec, model, tokenizer, level, "cuda", name_by_l2_code, l2_candidates)
         print(f"  Val: exact={val_metrics['exact']:.4f} jaccard={val_metrics['jaccard']:.4f} partial={val_metrics['partial']:.4f}")
 
-        if val_metrics['exact'] > best_val_cls_acc:
-            best_val_cls_acc = val_metrics['exact']
+        val_score = val_metrics['jaccard'] if level == 4 else val_metrics['exact']
+
+        if val_score > best_val_cls_acc:
+            best_val_cls_acc = val_score
             model.save_pretrained(str(out_path))
             tokenizer.save_pretrained(str(out_path))
-            print(f"  [UPD] Best model saved (exact={val_metrics['exact']:.4f})")
+            print(f"  [UPD] Best model saved (score={val_score:.4f})")
 
         model.train()
 
-    model = AutoModelForSequenceClassification.from_pretrained(str(out_path)).to("cuda")
-    tokenizer = AutoTokenizer.from_pretrained(str(out_path))
-
-    test_metrics = compute_cls_accuracy(test_rec, model, tokenizer, level, "cuda", name_by_l2_code, l2_candidates)
-    print(f"  Test: exact={test_metrics['exact']:.4f} jaccard={test_metrics['jaccard']:.4f} partial={test_metrics['partial']:.4f}")
+        # model = AutoModelForSequenceClassification.from_pretrained(str(out_path)).to("cuda")
+        # tokenizer = AutoTokenizer.from_pretrained(str(out_path))
+        #
+        # test_metrics = compute_cls_accuracy(test_rec, model, tokenizer, level, "cuda", name_by_l2_code, l2_candidates)
+        # print(f"  Test: exact={test_metrics['exact']:.4f} jaccard={test_metrics['jaccard']:.4f} partial={test_metrics['partial']:.4f}")
 
 
 if __name__ == "__main__":

@@ -10,9 +10,11 @@ from PIL import Image
 from pdf2image import convert_from_path
 import pytesseract
 
+load_dotenv()
+
 PDF_PATH = "361-11.pdf"
-pytesseract.pytesseract.tesseract_cmd = 'D:/tesseract/tesseract.exe'
-POPPLER_PATH = "D:/poppler/poppler-25.12.0/Library/bin"
+pytesseract.pytesseract.tesseract_cmd = os.getenv('TESSERACT_CMD', 'tesseract')
+POPPLER_PATH = os.getenv('POPPLER_PATH')
 
 def text_extraction(element):
     line_text = element.get_text()
@@ -66,7 +68,7 @@ def image_to_text(image_path):
     return pytesseract.image_to_string(img, lang='rus+eng')
 
 
-def pdf_extract(pdf_path):
+def pdf_extract(pdf_path, dpi=200):
     all_content = []
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -121,16 +123,22 @@ def pdf_extract(pdf_path):
 
                                 images = convert_from_path(
                                     cropped_path,
-                                    poppler_path=POPPLER_PATH
+                                    dpi=dpi,
+                                    poppler_path=POPPLER_PATH,
+                                    fmt='png',
+                                    grayscale=True
                                 )
                                 images[0].save(image_path, 'PNG')
-                                page_content.append(image_to_text(image_path))
+                                ocr_text = image_to_text(image_path)
+                                if ocr_text.strip():
+                                    page_content.append(ocr_text)
                             except Exception as e:
                                 print(f"Ошибка при обработке изображения на стр. {pagenum}: {e}")
 
                     all_content.append(''.join(page_content))
 
     return '\n'.join(all_content)
+
 
 if __name__ == "__main__":
     print(f"Извлекаем текст из: {PDF_PATH}")
