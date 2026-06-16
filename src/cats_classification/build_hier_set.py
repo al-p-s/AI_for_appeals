@@ -105,13 +105,13 @@ def main():
         print(f"  {summary}")
 
         dataset.append({
-            "file_name":      file_name,
-            "summary":        summary,
-            "true_l2":        true_l2,
-            "true_l3":        true_l3,
-            "true_l4":        true_l4,
-            "candidates_l3":  children(cats_l3, true_l2_code, 2),
-            "candidates_l4":  children(cats_l4, true_l3_code, 3),
+            "file_name": file_name,
+            "summary": summary,
+            "true_l2": true_l2,
+            "true_l3": true_l3,
+            "true_l4": true_l4,
+            "candidates_l3": children(cats_l3, true_l2_code, 2),
+            "candidates_l4": children(cats_l4, true_l3_code, 3),
         })
 
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:

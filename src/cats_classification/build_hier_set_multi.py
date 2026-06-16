@@ -9,19 +9,11 @@ APPEALS_CATS_PATH = "../../data/sets_to_learn/appeals_w_cats/appeals_w_cats1068.
 CATS_L2_PATH = "../../data/classifier/cats2.json"
 CATS_L3_PATH = "../../data/classifier/cats3.json"
 CATS_L4_PATH = "../../data/classifier/cats4.json"
-OUTPUT_PATH = "../../data/sets_to_learn/dataset_1068_v2.json"
+OUTPUT_PATH = "../../data/sets_to_learn/dataset_1068_short.json"
 GIGACHAT_PATH = "../../models/gigaChat_lite"
 EVAL_LIMIT = None
 
-SUMM_PROMPT = """Ты — эксперт по обработке обращений граждан в органы власти. Напиши аннотацию строго в 2–3 предложения, избегая номеров, телефонов и приветствий.
-Что важно отразить:
-Категорию заявителя и адрес (только если они прямо названы в тексте), основную проблему: чего требует или на что жалуется заявитель.
-Ключевую причину/препятствие (почему возникла проблема или почему заявитель не может решить её сам), ожидаемый результат (что должно быть сделано по мнению заявителя).
-
-Важно: если каких-либо данных (адрес, категория) в тексте нет, не упоминай их.
-
-Стиль: сухой, без вводных слов и воды.
-
+SUMM_PROMPT = """Кратко изложи суть обращения в 1-2 предложениях: кто обращается, на что жалуется или что просит, и почему.
 ОБРАЩЕНИЕ:
 {text}"""
 
@@ -55,24 +47,6 @@ def summarize(text, tokenizer, model, gen_config) -> str:
     output_ids = output_ids[len(data["input_ids"][0]):]
 
     summary = tokenizer.decode(output_ids, skip_special_tokens=True).strip()
-
-    prefix_pattern = re.compile(r'^\s*Эксперт по обработке обращений граждан в органы власти\.\s*', re.IGNORECASE)
-
-    address_pattern = re.compile(
-        r'(?:,\s*)?' # опциональная запятая перед
-        r'(?:\b(?:проживающ(?:ий|ая))\s+)?' # опционально "проживающий/проживающая"
-        r'по\s+адресу\s*:?\s*' # "по адресу" с опциональным двоеточием
-        r'\[(?:адрес\s*)?(?:не\s*указан|скрыт|данные\s*не\s*указаны|адрес)?\]' # [адрес], [адрес не указан] и т.д.
-        r'\s*[.,]?\s*',
-        re.IGNORECASE
-    )
-
-    summary = prefix_pattern.sub("", summary)
-    summary = address_pattern.sub("", summary)
-    summary = re.sub(r'\s{2,}', ' ', summary)
-    summary = re.sub(r'\s([.,])', r'\1', summary)
-
-    summary = summary.strip()
 
     return summary
 
@@ -136,13 +110,13 @@ def main():
         print(f"  {summary}")
 
         dataset.append({
-            "file_name":      file_name,
-            "summary":        summary,
-            "true_l2":        true_l2,
-            "true_l3":        true_l3,
-            "true_l4":        true_l4,
-            "candidates_l3":  candidates_l3,
-            "candidates_l4":  candidates_l4,
+            "file_name": file_name,
+            "summary": summary,
+            "true_l2": true_l2,
+            "true_l3": true_l3,
+            "true_l4": true_l4,
+            "candidates_l3": candidates_l3,
+            "candidates_l4": candidates_l4,
         })
 
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
