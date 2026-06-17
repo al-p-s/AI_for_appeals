@@ -3,8 +3,6 @@ import torch
 import re
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 
-from src.cats_classification.cut_extras import address_pattern
-
 APPEALS_CATS_PATH = "../../data/sets_to_learn/appeals_w_cats/appeals_w_cats1068.json"
 CATS_L2_PATH = "../../data/classifier/cats2.json"
 CATS_L3_PATH = "../../data/classifier/cats3.json"
