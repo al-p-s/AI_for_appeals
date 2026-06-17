@@ -4,14 +4,14 @@ import logging
 from single_inference import classify_text
 from ner_inference import extract_entities
 
-DATASET_PATH = "../../data/sets_to_learn/appeals_w_cats/appeals_w_cats_test_99_NEW.json"
+DATASET_PATH = "../../data/sets_to_learn/appeals_w_cats/appeals_w_cats_test_98_NEW.json"
 CATS_L4 = "../../data/classifier/cats4.json"
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
     handlers=[
-        logging.FileHandler("logs/99test_pipeline_v3.log", encoding="utf-8"),
+        logging.FileHandler("logs/98test_pipeline_v3.log", encoding="utf-8"),
         logging.StreamHandler()
     ]
 )
