@@ -4,14 +4,14 @@ import logging
 from single_inference import classify_text
 from ner_inference import extract_entities
 
-DATASET_PATH = "../../data/sets_to_learn/appeals_w_cats/chel_appeals_with_cats99_test_NEW_OCR.json"
+DATASET_PATH = "../../data/sets_to_learn/appeals_w_cats/appeals_w_cats_test_99_NEW.json"
 CATS_L4 = "../../data/classifier/cats4.json"
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
     handlers=[
-        logging.FileHandler("99test_pipeline_NEW_exac.log", encoding="utf-8"),
+        logging.FileHandler("logs/99test_pipeline_v3.log", encoding="utf-8"),
         logging.StreamHandler()
     ]
 )
@@ -203,7 +203,7 @@ def main():
     logger.info(f"Partial L3 accuracy: {partial_acc_l3:.4f}")
     logger.info(f"Mean L3 Jaccard: {jaccard_avg_l3:.4f}")
 
-    with open("classification_errors.json", "w", encoding="utf-8") as f:
+    with open("logs/classification_errors.json", "w", encoding="utf-8") as f:
         json.dump(errors, f, ensure_ascii=False, indent=2)
 
     logger.info("Errors saved to classification_errors.json")

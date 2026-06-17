@@ -34,7 +34,7 @@ SUMM_PROMPT = """Ты — эксперт по обработке обращен�
 ОБРАЩЕНИЕ:
 {text}"""
 
-# LOG_FILE = "full_pipeline.log"
+# LOG_FILE = "logs/single_pipeline.log"
 #
 # logging.basicConfig(
 #     level=logging.INFO,

@@ -9,7 +9,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
     handlers=[
-        logging.FileHandler("full_pipeline.log", encoding="utf-8"),
+        logging.FileHandler("logs/full_pipeline.log", encoding="utf-8"),
         logging.StreamHandler()
     ]
 )
