@@ -10,9 +10,9 @@ CATS_L3 = "../../data/classifier/cats3.json"
 CATS_L4 = "../../data/classifier/cats4.json"
 
 GIGACHAT_PATH = "../../models/gigaChat_lite"
-KERYX_PATH_L2 = "../../models/KERYX_1068_m_v3/L2"
-KERYX_PATH_L3 = "../../models/KERYX_1068_m_v3/L3"
-KERYX_PATH_L4 = "../../models/KERYX_1068_m_v3/L4"
+KERYX_PATH_L2 = "../../models/KERYX_1223/L2"
+KERYX_PATH_L3 = "../../models/KERYX_1223/L3"
+KERYX_PATH_L4 = "../../models/KERYX_1223/L4"
 
 THRESHOLD_L2 = 0.9
 THRESHOLD_L3 = 0.85
