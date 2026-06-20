@@ -1,15 +1,20 @@
 import os
 import json
 
-from src.features.text_extractor import pdf_extract
+from src.features.OCR.pdf_extractor_test import pdf_extract
 
-directory = r'D:/Обращения/appeals_100test_sasha'
+directory = r'E:/работа/новые выбранные'
 files = os.listdir(directory)
-json_path = "../../data/appeals_99_test_sasha_NEW_OCR.json"
+json_path = "../../../data/OCR_improving/appeals121_20_06_TEST.json"
 
 all_appeals = []
 
+i = 0
+
 for folder in files:
+    if i == 50:
+        break
+
     folder_path = os.path.join(directory, folder)
     if not os.path.isdir(folder_path):
         continue
@@ -28,6 +33,8 @@ for folder in files:
         "text": text
     }
     all_appeals.append(appeal_data)
+
+    i = i + 1
 
 with open(json_path, "w", encoding="utf-8") as f:
     json.dump({"appeals": all_appeals}, f, ensure_ascii=False, indent=4)

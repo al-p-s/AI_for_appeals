@@ -74,7 +74,7 @@ def image_to_text(image_path):
     return pytesseract.image_to_string(img, lang='rus+eng')
 
 
-def pdf_extract(pdf_path, dpi=200):
+def pdf_extract(pdf_path, dpi=150):
     all_content = []
 
     with tempfile.TemporaryDirectory() as tmpdir:
