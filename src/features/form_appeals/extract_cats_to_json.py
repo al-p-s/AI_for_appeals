@@ -61,6 +61,6 @@ def parse_classifier(pdf_path, output_path):
     print(f"Сохранено в: {output_path}")
 
 if __name__ == "__main__":
-    PDF_PATH = r"../../data/classifier/classifier_2024.pdf"
+    PDF_PATH = r"../../../data/classifier/classifier_2024.pdf"
     OUTPUT_PATH = r"../../data/classifier/cats.json"
     parse_classifier(PDF_PATH, OUTPUT_PATH)

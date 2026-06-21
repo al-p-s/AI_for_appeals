@@ -22,3 +22,4 @@ else:
     print(f"\nТолько в первом файле ({len(only_in_first)} шт.):")
     for name in sorted(only_in_first):
         print(name)
+
