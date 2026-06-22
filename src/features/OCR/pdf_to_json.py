@@ -1,19 +1,18 @@
 import os
 import json
+import time
 
 from src.features.OCR.pdf_extractor_test import pdf_extract
 
 directory = r'E:/работа/новые выбранные'
 files = os.listdir(directory)
-json_path = "../../../data/OCR_improving/appeals121_20_06_TEST.json"
+json_path = "../../../data/appeals121_22_06.json"
 
 all_appeals = []
 
-i = 0
+start_time = time.time()
 
 for folder in files:
-    if i == 50:
-        break
 
     folder_path = os.path.join(directory, folder)
     if not os.path.isdir(folder_path):
@@ -34,7 +33,8 @@ for folder in files:
     }
     all_appeals.append(appeal_data)
 
-    i = i + 1
+elapsed_time = time.time() - start_time
+print(elapsed_time)
 
 with open(json_path, "w", encoding="utf-8") as f:
     json.dump({"appeals": all_appeals}, f, ensure_ascii=False, indent=4)
