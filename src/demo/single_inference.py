@@ -9,13 +9,13 @@ CATS_L2 = "../../data/classifier/cats2.json"
 CATS_L3 = "../../data/classifier/cats3.json"
 CATS_L4 = "../../data/classifier/cats4.json"
 
-GIGACHAT_PATH = "../../models/gigaChat_lite"
+GIGACHAT_PATH = "../../models/GigaChat_Lite_NEW"
 KERYX_PATH_L2 = "../../models/KERYX_1223/L2"
 KERYX_PATH_L3 = "../../models/KERYX_1223/L3"
 KERYX_PATH_L4 = "../../models/KERYX_1223/L4"
 
 THRESHOLD_L2 = 0.9
-THRESHOLD_L3 = 0.85
+THRESHOLD_L3 = 0.8
 THRESHOLD_L4 = 0.8
 
 HARDCODED_TEXT = """
@@ -107,6 +107,9 @@ def get_children(cats, parent_code, level):
     return [c for c in cats if c["code"].startswith(prefix + ".")]
 
 
+ABS_THRESHOLD_L3 = 0.1  # ниже — не идём в L4
+ABS_THRESHOLD_L2 = 0.1  # ниже — не идём в L3
+
 def classify_text(text: str):
     summary = summarize(text, gigachat_tok, gigachat_model, gigachat_gen)
 
@@ -114,6 +117,9 @@ def classify_text(text: str):
 
     pred_l3 = []
     for l2, l2_score in pred_l2:
+        if l2_score < ABS_THRESHOLD_L2:
+            logger.info(f"Skip L3 for {l2['code']} (score={l2_score:.3f})")
+            continue
         cands_l3 = get_children(cats_l3, l2["code"], 2)
         l2_name = name_by_code.get(l2["code"], "")
         if cands_l3:
@@ -122,6 +128,9 @@ def classify_text(text: str):
 
     pred_l4 = []
     for l3, l3_score in pred_l3:
+        if l3_score < ABS_THRESHOLD_L3:
+            logger.info(f"Skip L4 for {l3['code']} (score={l3_score:.3f})")
+            continue
         cands_l4 = get_children(cats_l4, l3["code"], 3)
         l3_name = name_by_code.get(l3["code"], "")
         l2_code = ".".join(l3["code"].split(".")[:2]) + ".0000.0000"
