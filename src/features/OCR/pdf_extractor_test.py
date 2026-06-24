@@ -1,23 +1,30 @@
 import os
 import re
 import tempfile
+from dotenv import load_dotenv
+
+load_dotenv()
+
+cudnn_path = os.getenv('CUDNN_PATH')
+if cudnn_path:
+    os.environ['PATH'] = cudnn_path + os.pathsep + os.environ.get('PATH', '')
 
 import easyocr
 import numpy as np
 import pdfplumber
 import PyPDF2
-from dotenv import load_dotenv
 from pdf2image import convert_from_path
 from paddleocr import PaddleOCR
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTChar, LTFigure, LTTextContainer
 from PIL import Image
+from pathlib import Path
 
 
 load_dotenv()
 
 POPPLER_PATH = os.getenv('POPPLER_PATH')
-
+EASYOCR_MODEL_DIR = os.getenv('EASYOCR_MODEL_DIR', str(Path.home() / '.EasyOCR' / 'model'))
 
 _ocr_engine = None
 _easyocr_engine = None
@@ -27,7 +34,7 @@ _easyocr_engine = None
 CYRILLIC_TO_LATIN = str.maketrans({
     'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'х': 'x', 'у': 'y',
     'і': 'i', 'п': 'n', 'г': 'r', 'к': 'k', 'м': 'm', 'н': 'h', 'б': 'b',
-    'и': 'u', 'д': 'd', 'т': 't',   # 'т': 't' — латинская t, не кириллица
+    'и': 'u', 'д': 'd', 'т': 't',
     'А': 'A', 'В': 'B', 'Е': 'E', 'К': 'K', 'М': 'M', 'Н': 'H', 'О': 'O',
     'Р': 'P', 'С': 'C', 'Т': 'T', 'Х': 'X', 'У': 'Y', 'Г': 'G', 'П': 'P',
 })
@@ -87,10 +94,11 @@ def get_ocr_engine() -> PaddleOCR:
     if _ocr_engine is None:
         _ocr_engine = PaddleOCR(
             lang='ru',
+            text_detection_model_name='PP-OCRv5_server_det',
+            text_recognition_model_name='eslav_PP-OCRv5_mobile_rec',
             use_doc_orientation_classify=False,
             use_doc_unwarping=False,
             use_textline_orientation=False,
-            # device='gpu',
         )
     return _ocr_engine
 
@@ -98,8 +106,11 @@ def get_ocr_engine() -> PaddleOCR:
 def get_easyocr_engine() -> easyocr.Reader:
     global _easyocr_engine
     if _easyocr_engine is None:
-        # gpu=False
-        _easyocr_engine = easyocr.Reader(['en'], gpu=False)
+        _easyocr_engine = easyocr.Reader(
+            ['en'],
+            gpu=False,
+            model_storage_directory=EASYOCR_MODEL_DIR,
+        )
     return _easyocr_engine
 
 # =============================================================================

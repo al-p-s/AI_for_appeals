@@ -4,9 +4,9 @@ import time
 
 from src.features.OCR.pdf_extractor_test import pdf_extract
 
-directory = r'E:/работа/appeals_350_sasha/appeals_350_sasha'
+directory = r'D:/Обращения/second_250/second_250'
 files = os.listdir(directory)
-json_path = "../../../data/all_appeals_new_OCR/appeals350SASHA_23_06.json"
+json_path = "../../../data/all_appeals_new_OCR/appeals250SASHA_23_06.json"
 
 all_appeals = []
 
