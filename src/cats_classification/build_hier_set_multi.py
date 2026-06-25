@@ -8,7 +8,7 @@ CATS_L2_PATH = "../../data/classifier/cats2.json"
 CATS_L3_PATH = "../../data/classifier/cats3.json"
 CATS_L4_PATH = "../../data/classifier/cats4.json"
 OUTPUT_PATH = "../../data/sets_to_learn/dataset_121_new.json"
-GIGACHAT_PATH = "../../models/gigaChat_lite"
+GIGACHAT_PATH = "../../models/GigaChat_Lite_NEW"
 EVAL_LIMIT = None
 
 SUMM_PROMPT = """Кратко изложи суть обращения в 1-2 предложениях: кто обращается, на что жалуется или что просит, и почему.
