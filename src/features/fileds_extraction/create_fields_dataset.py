@@ -140,8 +140,8 @@ def main():
 
 if __name__ == "__main__":
     INPUT_DIR = r"D:\Обращения\xml_w_fields"
-    OUTPUT_FILE = "../../../data/sets_to_learn/fields/target_fields.json"
-    DATASET_PATH = "../../../data/sets_to_learn/dataset_1223.json"
+    OUTPUT_FILE = "../../../data/sets_to_learn/fields/target_fields_v2.json"
+    DATASET_PATH = "../../../data/sets_to_learn/dataset_1222.json"
 
     from pathlib import Path
 
@@ -169,12 +169,12 @@ if __name__ == "__main__":
     for xml_path in xml_files:
         try:
             root = read_xml(str(xml_path))
-            record = extract_record(root, xml_path.name)
+            record = extract_record(root, xml_path.stem)
             results.append(record)
-            print(f"  OK  {xml_path.name}")
+            print(f"  OK  {xml_path.stem}")
         except Exception as e:
-            errors.append({"file": xml_path.name, "error": str(e)})
-            print(f"  ERR {xml_path.name}: {e}")
+            errors.append({"file": xml_path.stem, "error": str(e)})
+            print(f"  ERR {xml_path.stem}: {e}")
 
     output = {
         "appeals": results,
