@@ -10,10 +10,10 @@ from transformers import AutoModelForSequenceClassification
 from pathlib import Path
 
 
-DATASET_PATH = "../../data/sets_to_learn/dataset_1223.json"
+DATASET_PATH = "../../data/sets_to_learn/dataset_1340.json"
 CATS2_PATH = "../../data/classifier/cats2.json"
 USER2_PATH = "../../models/USER2-base"
-OUTPUT_DIR = "../../models/KERYX_1223"
+OUTPUT_DIR = "../../models/KERYX_1340"
 
 BATCH_SIZE = 16
 MAX_LEN = 256
@@ -24,7 +24,7 @@ LEVEL_CONFIG = {
     4: {"epochs": 5, "lr": 1e-5, "n_neg": 12},
 }
 
-def set_seed(seed=666):
+def set_seed(seed=66):
     random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
