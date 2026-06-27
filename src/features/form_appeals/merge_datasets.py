@@ -1,8 +1,8 @@
 import json
 
-PATH_1 = "../../../data/sets_to_learn/dataset_1068_short.json"
-PATH_2 = "../../../data/sets_to_learn/dataset_155_short.json"
-OUTPUT_PATH = "../../../data/sets_to_learn/dataset_1222.json"
+PATH_1 = "../../../data/sets_to_learn/dataset_1222.json"
+PATH_2 = "../../../data/sets_to_learn/dataset_119_G.json"
+OUTPUT_PATH = "../../../data/sets_to_learn/dataset_1341.json"
 
 with open(PATH_1, encoding="utf-8") as f:
     data1 = json.load(f)

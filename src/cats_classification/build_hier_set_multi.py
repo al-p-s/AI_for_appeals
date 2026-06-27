@@ -3,11 +3,11 @@ import torch
 import re
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 
-APPEALS_CATS_PATH = "../../data/sets_to_learn/appeals_w_cats/121_Misha_additional.json"
+APPEALS_CATS_PATH = "../../data/sets_to_learn/appeals_w_cats/41_for_learn_G.json"
 CATS_L2_PATH = "../../data/classifier/cats2.json"
 CATS_L3_PATH = "../../data/classifier/cats3.json"
 CATS_L4_PATH = "../../data/classifier/cats4.json"
-OUTPUT_PATH = "../../data/sets_to_learn/dataset_121_new.json"
+OUTPUT_PATH = "../../data/sets_to_learn/dataset_41_new_G.json"
 GIGACHAT_PATH = "../../models/GigaChat_Lite_NEW"
 EVAL_LIMIT = None
 
