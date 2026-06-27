@@ -13,7 +13,7 @@ from pathlib import Path
 DATASET_PATH = "../../data/sets_to_learn/dataset_1340.json"
 CATS2_PATH = "../../data/classifier/cats2.json"
 USER2_PATH = "../../models/USER2-base"
-OUTPUT_DIR = "../../models/KERYX_1340"
+OUTPUT_DIR = "../../models/KERYX_1340v3"
 
 BATCH_SIZE = 16
 MAX_LEN = 256
@@ -24,7 +24,7 @@ LEVEL_CONFIG = {
     4: {"epochs": 5, "lr": 1e-5, "n_neg": 12},
 }
 
-def set_seed(seed=66):
+def set_seed(seed=42):
     random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -265,7 +265,7 @@ def train(level: int):
 
     with open(DATASET_PATH, encoding="utf-8") as f:
         records = json.load(f)
-    random.seed(66)
+    random.seed(42)
     random.shuffle(records)
     n = len(records)
     train_rec = records[:int(n * 0.9)]

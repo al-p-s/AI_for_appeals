@@ -7,7 +7,9 @@ from transformers import AutoTokenizer, AutoModelForTokenClassification
 logger = logging.getLogger(__name__)
 
 LABEL_MAPPING_PATH = "../../data/label_mapping.json"
-MODEL_PATH = "../../models/train_NER_RuModernBert/checkpoint-504"
+MODEL_PATH = "../../models/train_NER_RuModernBert2_0/checkpoint-720"
+
+SKIP_LABELS = {"GOV_EMAIL"}
 
 with open(LABEL_MAPPING_PATH, "r", encoding="utf-8") as f:
     mapping = json.load(f)
@@ -17,6 +19,7 @@ id2label = {int(k): v for k, v in mapping["id2label"].items()}
 tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
 model = AutoModelForTokenClassification.from_pretrained(MODEL_PATH)
 model.eval()
+model = model.to("cuda")
 
 logger.info("NER model loaded")
 
@@ -33,8 +36,8 @@ def extract_entities(text: str):
         truncation=True,
         max_length=1024
     )
-
     word_ids = inputs.word_ids()
+    inputs = {k: v.to("cuda") for k, v in inputs.items()}
 
     with torch.no_grad():
         logits = model(**inputs).logits
@@ -90,6 +93,8 @@ def format_ner_entities(entities: dict):
     result = []
 
     for label, values in entities.items():
+        if label in SKIP_LABELS:
+            continue
         uniq_values = list(dict.fromkeys(values))
         result.append(f"{label}: {', '.join(uniq_values)}")
 

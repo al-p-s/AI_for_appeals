@@ -1,7 +1,7 @@
 import gradio as gr
 import logging
 
-from extract_text import pdf_extract
+from src.features.OCR.pdf_extractor_test import pdf_extract
 from single_inference import classify_text
 from ner_inference import extract_entities, format_ner_entities
 

@@ -42,7 +42,7 @@ def resolve(value: str | None, id_map: dict) -> str:
     return id_map.get(value, value)
 
 
-def extract_record(root: ET.Element, file_name: str) -> dict:
+def extract_record(root: ET.Element, file_name: str, text: str = "") -> dict:
     id_map = build_id_to_name(root)
 
     card = root.find("CardDocument")
@@ -67,6 +67,7 @@ def extract_record(root: ET.Element, file_name: str) -> dict:
 
     record = {
         "file_name": file_name,
+        "text": text,
         # Информация
         "AppealKind": resolve(m("AppealKind"), id_map),
         "StatusId": resolve(m("StatusId"), id_map),
@@ -140,16 +141,18 @@ def main():
 
 if __name__ == "__main__":
     INPUT_DIR = r"D:\Обращения\xml_w_fields"
-    OUTPUT_FILE = "../../../data/sets_to_learn/fields/target_fields_v2.json"
-    DATASET_PATH = "../../../data/sets_to_learn/dataset_1222.json"
+    OUTPUT_FILE = "../../../data/sets_to_learn/fields/target_fields_test_100.json"
+    DATASET_PATH = "../../../data/sets_to_learn/appeals_w_cats/100_for_test_G.json"
 
     from pathlib import Path
 
     # берём file_name из датасета
     with open(DATASET_PATH, encoding="utf-8") as f:
-        dataset = json.load(f)
+        data = json.load(f)
 
+    dataset = data["appeals"]
     target_names = {r["file_name"].lower() for r in dataset}
+    file_to_text = {r["file_name"].lower(): r.get("text", "") for r in dataset}
 
     input_dir = Path(INPUT_DIR)
 
@@ -169,7 +172,8 @@ if __name__ == "__main__":
     for xml_path in xml_files:
         try:
             root = read_xml(str(xml_path))
-            record = extract_record(root, xml_path.stem)
+            text = file_to_text.get(xml_path.stem.lower(), "")
+            record = extract_record(root, xml_path.stem, text)
             results.append(record)
             print(f"  OK  {xml_path.stem}")
         except Exception as e:
