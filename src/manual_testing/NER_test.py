@@ -6,7 +6,7 @@ with open("../../data/label_mapping.json", "r", encoding="utf-8") as f:
     mapping = json.load(f)
 id2label = {int(k): v for k, v in mapping["id2label"].items()}
 
-model_path = "../../models/train_NER_RuModernBert/checkpoint-504"
+model_path = "../../models/train_NER_RuModernBert2_0/checkpoint-720"
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = AutoModelForTokenClassification.from_pretrained(model_path)
 model.eval()
@@ -40,4 +40,4 @@ def predict_ner(text: str):
         label = seen_words.get(word_idx, "O")
         print(f"{word:<20} {label}")
 
-predict_ner("Иванов Пётр Сергеевич отправил письмо на адрес ivanov@gov.ru")
+predict_ner("Иванов Пётр Сергеевич отправил письмо на адрес ivanov@mail.ru, его телефон 79201111111, живет он по адресу г.Челябинск, ул.Ленина, д.10")

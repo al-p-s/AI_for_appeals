@@ -75,6 +75,9 @@ def main():
     ner_correct = defaultdict(int)
     ner_total = defaultdict(int)
 
+    field_correct = defaultdict(int)
+    field_total = defaultdict(int)
+
     for idx, item in enumerate(appeals, start=1):
 
         file_name = item.get("file_name", "unknown")
@@ -95,7 +98,7 @@ def main():
         field_item = fields_by_file.get(file_name, {})
 
         try:
-            summary, pred_l2, pred_l3, pred_l4 = classify_text(text)
+            summary, pred_l2, pred_l3, pred_l4, field_predictions = classify_text(text)
 
             pred_codes = []
             if pred_l4.strip():
@@ -171,6 +174,11 @@ def main():
             # NER
             entities = extract_entities(text)
             logger.info(f"NER: {entities}")
+            # Field predictions vs true
+            logger.info("Field predictions:")
+            for field_name, pred_value in field_predictions.items():
+                gt_value = field_item.get(field_name, "").strip()
+                logger.info(f"  {field_name}: TRUE='{gt_value}' | PRED='{pred_value}'")
             # NER true vs pred
             for ner_label, field_name in NER_TO_FIELD.items():
                 gt_value = field_item.get(field_name, "").strip()
@@ -187,6 +195,14 @@ def main():
                 predicted_values = [v.lower() for v in entities.get(ner_label, [])]
                 if any(gt_value == pred for pred in predicted_values):
                     ner_correct[ner_label] += 1
+
+            for field_name, pred_value in field_predictions.items():
+                gt_value = field_item.get(field_name, "").strip()
+                if not gt_value:
+                    continue
+                field_total[field_name] += 1
+                if pred_value.strip().lower() == gt_value.lower():
+                    field_correct[field_name] += 1
 
             # errors
             if pred_set != true_set:
@@ -249,6 +265,21 @@ def main():
     logger.info("-" * 55)
     overall = total_c / total_t if total_t else 0
     logger.info(f"{'ИТОГО':<25} {total_c:>10} {total_t:>8} {overall:>10.3f}")
+
+    logger.info("=" * 60)
+    logger.info("FIELD CLASSIFICATION METRICS")
+    logger.info(f"{'Поле':<35} {'Правильно':>10} {'Всего':>8} {'Accuracy':>10}")
+    logger.info("-" * 65)
+    total_fc, total_ft = 0, 0
+    for field_name in sorted(field_total.keys()):
+        c = field_correct[field_name]
+        t = field_total[field_name]
+        total_fc += c
+        total_ft += t
+        logger.info(f"{field_name:<35} {c:>10} {t:>8} {c / t:>10.3f}")
+    logger.info("-" * 65)
+    overall_f = total_fc / total_ft if total_ft else 0
+    logger.info(f"{'ИТОГО':<35} {total_fc:>10} {total_ft:>8} {overall_f:>10.3f}")
 
     with open("logs/classification_errors.json", "w", encoding="utf-8") as f:
         json.dump(errors, f, ensure_ascii=False, indent=2)

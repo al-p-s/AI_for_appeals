@@ -1,0 +1,18 @@
+2026-06-29 00:39:14,719 | INFO | Training field classifier: ConsiderationType
+2026-06-29 00:39:14,719 | INFO | Candidates (4): ['0', '1', '2', 'не определяется']
+2026-06-29 00:39:14,788 | INFO | Train: 1206 | Val: 134
+2026-06-29 00:39:14,789 | INFO | Class distribution (train): {'0': 1206}
+2026-06-29 00:41:34,517 | INFO |   Epoch 1/5 | loss=0.2574 | acc=88.8%
+2026-06-29 00:41:49,306 | INFO |   Val accuracy: 1.0000
+2026-06-29 00:41:51,332 | INFO |   [UPD] Best model saved (acc=1.0000)
+2026-06-29 00:44:08,438 | INFO |   Epoch 2/5 | loss=0.0000 | acc=100.0%
+2026-06-29 00:44:23,490 | INFO |   Val accuracy: 1.0000
+2026-06-29 00:46:40,869 | INFO |   Epoch 3/5 | loss=0.0000 | acc=100.0%
+2026-06-29 00:46:56,010 | INFO |   Val accuracy: 1.0000
+2026-06-29 00:49:13,580 | INFO |   Epoch 4/5 | loss=0.0000 | acc=100.0%
+2026-06-29 00:49:28,523 | INFO |   Val accuracy: 1.0000
+2026-06-29 00:51:46,282 | INFO |   Epoch 5/5 | loss=0.0000 | acc=100.0%
+2026-06-29 00:52:01,060 | INFO |   Val accuracy: 1.0000
+2026-06-29 00:52:01,060 | INFO | 
+Done. Best val accuracy: 1.0000
+2026-06-29 00:52:01,060 | INFO | Model saved to: ..\..\models\KERYX_field_ConsiderationType

@@ -1,0 +1,18 @@
+2026-06-29 00:11:37,273 | INFO | Training field classifier: AppealKind
+2026-06-29 00:11:37,274 | INFO | Candidates (5): ['Заявление', 'Жалоба', 'Предложение', 'Не обращение', 'не определяется']
+2026-06-29 00:11:37,376 | INFO | Train: 1207 | Val: 133
+2026-06-29 00:11:37,377 | INFO | Class distribution (train): {'Заявление': 1190, 'Не обращение': 17}
+2026-06-29 00:14:31,831 | INFO |   Epoch 1/5 | loss=0.1806 | acc=93.8%
+2026-06-29 00:14:50,355 | INFO |   Val accuracy: 0.9925
+2026-06-29 00:14:52,245 | INFO |   [UPD] Best model saved (acc=0.9925)
+2026-06-29 00:17:43,741 | INFO |   Epoch 2/5 | loss=0.0369 | acc=99.4%
+2026-06-29 00:18:02,219 | INFO |   Val accuracy: 0.9850
+2026-06-29 00:20:53,862 | INFO |   Epoch 3/5 | loss=0.0149 | acc=99.6%
+2026-06-29 00:21:12,540 | INFO |   Val accuracy: 0.9774
+2026-06-29 00:24:04,548 | INFO |   Epoch 4/5 | loss=0.0059 | acc=99.9%
+2026-06-29 00:24:23,021 | INFO |   Val accuracy: 0.9850
+2026-06-29 00:27:15,295 | INFO |   Epoch 5/5 | loss=0.0001 | acc=100.0%
+2026-06-29 00:27:34,038 | INFO |   Val accuracy: 0.9774
+2026-06-29 00:27:34,038 | INFO | 
+Done. Best val accuracy: 0.9925
+2026-06-29 00:27:34,038 | INFO | Model saved to: ..\..\models\KERYX_field_AppealKind

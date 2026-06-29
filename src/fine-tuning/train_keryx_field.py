@@ -1,32 +1,34 @@
 import json
+import logging
 import torch
 import random
+from collections import Counter
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from torch.optim import AdamW
 from transformers import get_linear_schedule_with_warmup
 from pathlib import Path
 
-# Config
+# CONFIG
 
-FIELD_NAME = "AppealKind" # имя поля в датасете (ключ в JSON)
-FIELD_CANDIDATES = [ # варианты из справочника + "не определяется"
-    "Заявление",
-    "Жалоба",
-    "Предложение",
-    "Не обращение",
-    "не определяется",
-]
+FIELD_NAME = "PetitionerCategory"
+N_NEG = 15 # for StatusId, RegistrationPlaceId, DeliveryTypeId, PetitionerCategory
+# N_NEG = 4 # for AppealKind, ConsiderationType, ItemID, PetitionerDistrict, RegistrationPlaceId
+
+FIELDS_CONFIG_PATH = "../../data/classifier/category_fields.json"
+with open(FIELDS_CONFIG_PATH, encoding="utf-8") as f:
+    fields_config = json.load(f)
+cfg = next(c for c in fields_config if c["field_name"] == FIELD_NAME)
+FIELD_CANDIDATES = cfg["field_candidates"]
 
 DATASET_PATH = "../../data/sets_to_learn/fields/target_fields_v3.json"
 USER2_PATH = "../../models/USER2-base"
-OUTPUT_DIR = f"../../models/KERYX_field_{FIELD_NAME}"
+OUTPUT_DIR = f"../../models/KERYXes_for_fields/KERYX_field_{FIELD_NAME}"
 
 EPOCHS = 5
 LR = 2e-5
 BATCH_SIZE = 16
-MAX_LEN = 512 # сырой текст длиннее summary — берём побольше
-N_NEG = 4 # негативов на один позитив (кандидатов мало, не нужно больше)
+MAX_LEN = 512
 
 def set_seed(seed=42):
     random.seed(seed)
@@ -118,8 +120,23 @@ def compute_accuracy(records, model, tokenizer, device):
 
 
 def train():
-    print(f"Training field classifier: {FIELD_NAME}")
-    print(f"Candidates ({len(FIELD_CANDIDATES)}): {FIELD_CANDIDATES}")
+    log_path = Path(f"logs/fields/train_{FIELD_NAME}.log")
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(message)s",
+        handlers=[
+            logging.FileHandler(str(log_path), encoding="utf-8"),
+        ]
+    )
+    logger = logging.getLogger(__name__)
+
+    def log(msg):
+        print(msg)
+        logger.info(msg)
+
+    log(f"Training field classifier: {FIELD_NAME}")
+    log(f"Candidates ({len(FIELD_CANDIDATES)}): {FIELD_CANDIDATES}")
 
     set_seed()
 
@@ -127,16 +144,24 @@ def train():
         data = json.load(f)
     records = data["appeals"]
 
-    random.shuffle(records)
-    n = len(records)
-    train_rec = records[:int(n * 0.9)]
-    val_rec = records[int(n * 0.9):]
-    print(f"Train: {len(train_rec)} | Val: {len(val_rec)}")
+    from collections import defaultdict
+    groups = defaultdict(list)
+    for r in records:
+        groups[get_true_value(r, FIELD_NAME)].append(r)
 
-    # Распределение классов в трейне
-    from collections import Counter
+    train_rec, val_rec = [], []
+    for group in groups.values():
+        random.shuffle(group)
+        n_val = max(1, int(len(group) * 0.1))
+        val_rec.extend(group[:n_val])
+        train_rec.extend(group[n_val:])
+
+    random.shuffle(train_rec)
+    random.shuffle(val_rec)
+    log(f"Train: {len(train_rec)} | Val: {len(val_rec)}")
+
     dist = Counter(get_true_value(r, FIELD_NAME) for r in train_rec)
-    print(f"Class distribution (train): {dict(dist)}")
+    log(f"Class distribution (train): {dict(dist)}")
 
     tokenizer = AutoTokenizer.from_pretrained(USER2_PATH)
     model = AutoModelForSequenceClassification.from_pretrained(
@@ -184,19 +209,19 @@ def train():
             total += len(labels)
 
         train_acc = correct / total * 100
-        print(f"  Epoch {epoch+1}/{EPOCHS} | loss={total_loss/len(dataloader):.4f} | acc={train_acc:.1f}%")
+        log(f"  Epoch {epoch+1}/{EPOCHS} | loss={total_loss/len(dataloader):.4f} | acc={train_acc:.1f}%")
 
         val_acc = compute_accuracy(val_rec, model, tokenizer, "cuda")
-        print(f"  Val accuracy: {val_acc:.4f}")
+        log(f"  Val accuracy: {val_acc:.4f}")
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             model.save_pretrained(str(out_path))
             tokenizer.save_pretrained(str(out_path))
-            print(f"  [UPD] Best model saved (acc={val_acc:.4f})")
+            log(f"  [UPD] Best model saved (acc={val_acc:.4f})")
 
-    print(f"\nDone. Best val accuracy: {best_val_acc:.4f}")
-    print(f"Model saved to: {out_path}")
+    log(f"\nDone. Best val accuracy: {best_val_acc:.4f}")
+    log(f"Model saved to: {out_path}")
 
 
 if __name__ == "__main__":

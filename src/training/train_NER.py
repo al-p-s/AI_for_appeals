@@ -6,9 +6,9 @@ import json
 import numpy as np
 
 dataset = load_dataset("json", data_files={
-    "train": "../../data/train_dataset.json",
-    "validation": "../../data/validation_dataset.json",
-    "test": "../../data/test_dataset.json"
+    "train": "../../data/NER_relearn2_0/train_dataset.json",
+    "validation": "../../data/NER_relearn2_0/validation_dataset.json",
+    "test": "../../data/NER_relearn2_0/test_dataset.json"
 })
 
 model_id = "../../models/NER_RuModernBert_byVK"
@@ -77,13 +77,13 @@ def compute_metrics(eval_preds):
     return {"f1": f1_score(true_labels, true_preds, mode="strict", scheme=IOB2)}
 
 training_args = TrainingArguments(
-    output_dir="../../models/train_NER_RuModernBert",
-    num_train_epochs=6,
-    per_device_train_batch_size=4,
-    per_device_eval_batch_size=8,
-    learning_rate=3e-5,
-    weight_decay=0.005,
-    warmup_steps=100,
+    output_dir="../../models/train_NER_RuModernBert2_0",
+    num_train_epochs=10,
+    per_device_train_batch_size=2,
+    per_device_eval_batch_size=4,
+    learning_rate=2e-5,
+    weight_decay=0.01,
+    warmup_steps=50,
     lr_scheduler_type="cosine",
     eval_strategy="epoch",
     save_strategy="epoch",
@@ -101,6 +101,7 @@ trainer = Trainer(
     eval_dataset=tokenized_dataset["validation"],
     data_collator=data_collator,
     compute_metrics=compute_metrics,
+    tokenizer=tokenizer,
 )
 
 trainer.train()

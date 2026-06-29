@@ -17,6 +17,7 @@ class LabelStudioToBIOConverter:
             "B-PERSONAL_EMAIL", "I-PERSONAL_EMAIL",
             "B-GOV_EMAIL", "I-GOV_EMAIL",
             "B-PHONE_NUMBER", "I-PHONE_NUMBER",
+            "B-ADDRESS", "I-ADDRESS"
         ]
 
         self.label2id = {label: i for i, label in enumerate(self.labels)}
@@ -102,8 +103,8 @@ class LabelStudioToBIOConverter:
             json.dump(examples, f, ensure_ascii=False, indent=2)
 
 
-input_file = "../../data/appeals_with_marks_MISHA.json"
-output_file = "../../data/training_data_bio_MISHA.json"
+input_file = "../../data/NER_relearn2_0/raw_dataset.json"
+output_file = "../../data/NER_relearn2_0/dataset.json"
 
 converter = LabelStudioToBIOConverter(input_file)
 examples, stats = converter.convert_all()

@@ -5,6 +5,10 @@ import torch
 import logging
 from datetime import datetime
 
+
+FIELDS_CONFIG_PATH = "../../data/classifier/category_fields.json"
+KERYX_FIELDS_DIR = "../../models/KERYX_field_{}"
+
 CATS_L2 = "../../data/classifier/cats2.json"
 CATS_L3 = "../../data/classifier/cats3.json"
 CATS_L4 = "../../data/classifier/cats4.json"
@@ -67,6 +71,33 @@ def load_keryx(path):
     model = AutoModelForSequenceClassification.from_pretrained(path).to("cuda").eval()
     return tokenizer, model
 
+def load_fields_config():
+    with open(FIELDS_CONFIG_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+def load_field_models(fields_config):
+    models = {}
+    for cfg in fields_config:
+        field_name = cfg["field_name"]
+        path = KERYX_FIELDS_DIR.format(field_name)
+        try:
+            models[field_name] = (load_keryx(path), cfg["field_candidates"])
+            logger.info(f"Field model loaded: {field_name}")
+        except Exception as e:
+            logger.warning(f"Field model not found: {field_name} | {e}")
+    return models
+
+def classify_field(text, candidates, keryx_model):
+    tokenizer, model = keryx_model
+    scores = []
+    for candidate in candidates:
+        enc = tokenizer(text, candidate, return_tensors="pt",
+                        truncation=True, max_length=512).to("cuda")
+        with torch.no_grad():
+            logits = model(**enc).logits
+        scores.append(logits[0, 0].item())
+    best_idx = max(range(len(scores)), key=lambda i: scores[i])
+    return candidates[best_idx]
 
 def summarize(text: str, tokenizer, model, generation_config) -> str:
     prompt = tokenizer.apply_chat_template(
@@ -145,11 +176,17 @@ def classify_text(text: str):
     logger.info(f"L2 predictions: {[(c['code'], c['name'], round(s, 3)) for c, s in pred_l2]}")
     logger.info(f"L3 predictions: {[(c['code'], c['name'], round(s, 3)) for c, s in pred_l3]}")
     logger.info(f"L4 predictions: {[(c['code'], c['name'], round(s, 3)) for c, s in pred_l4]}")
+
+    field_predictions = {}
+    for field_name, (keryx_model, candidates) in field_models.items():
+        field_predictions[field_name] = classify_field(text, candidates, keryx_model)
+    logger.info(f"Field predictions: {field_predictions}")
     return (
         summary,
         format_preds(pred_l2),
         format_preds(pred_l3),
         format_preds(pred_l4),
+        field_predictions,
     )
 
 logger.info("Classificator initialization (cats and models loading)...")
@@ -163,6 +200,8 @@ gigachat_tok, gigachat_model, gigachat_gen = load_gigachat()
 keryx_l2 = load_keryx(KERYX_PATH_L2)
 keryx_l3 = load_keryx(KERYX_PATH_L3)
 keryx_l4 = load_keryx(KERYX_PATH_L4)
+fields_config = load_fields_config()
+field_models = load_field_models(fields_config)
 
 logger.info("Models ready for inference.")
 
