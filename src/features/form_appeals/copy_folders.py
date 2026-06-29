@@ -3,11 +3,10 @@ import os
 import shutil
 
 # ЗАДАЙТЕ ПУТИ ЗДЕСЬ
-json_path = "../../../data/sets_to_learn/appeals_w_cats/appeals_w_cats1222.json"  # Путь к JSON файлу
-source_dir = r"D:\Обращения\ALL"  # Папка, где лежат папки для копирования
-dest_dir = r"D:\Обращения\ALL_Chelyaba"  # Папка, куда копировать
+json_path = "../../../data/sets_to_learn/appeals_w_cats/100_for_test_G.json" # Путь к JSON файлу
+source_dir = r"D:\Обращения\ALL" # Папка, где лежат папки для копирования
+dest_dir = r"D:\Обращения\100_test_appeals" # Папка, куда копировать
 
-# Загружаем JSON
 with open(json_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
 

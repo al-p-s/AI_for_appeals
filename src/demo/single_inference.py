@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 FIELDS_CONFIG_PATH = "../../data/classifier/category_fields.json"
-KERYX_FIELDS_DIR = "../../models/KERYX_field_{}"
+KERYX_FIELDS_DIR = "../../models/KERYXes_for_fields/KERYX_field_{}"
 
 CATS_L2 = "../../data/classifier/cats2.json"
 CATS_L3 = "../../data/classifier/cats3.json"

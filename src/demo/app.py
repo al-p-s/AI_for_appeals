@@ -16,18 +16,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# Человекочитаемые названия полей
-FIELD_LABELS = {
-    "AppealKind": "Вид обращения",
-    "ConsiderationType": "Тип обращения (первичное/повторное)",
-    "ItemID": "Форма обращения",
-    "PetitionerDistrict": "Район проживания заявителя",
-    "RegistrationPlaceId": "Место события",
-    "StatusId": "Тип обращения",
-    "DeliveryTypeId": "Источник поступления",
-    "PetitionerCategory": "Категория заявителя",
-}
-
 NER_LABELS = {
     "LAST_NAME": "Фамилия",
     "FIRST_NAME": "Имя",
@@ -36,15 +24,6 @@ NER_LABELS = {
     "PHONE_NUMBER": "Телефон",
     "ADDRESS": "Адрес",
 }
-
-
-def format_field_predictions(field_predictions: dict) -> str:
-    lines = []
-    for field_name, value in field_predictions.items():
-        label = FIELD_LABELS.get(field_name, field_name)
-        lines.append(f"{label}: {value}")
-    return "\n".join(lines) if lines else "Поля не определены"
-
 
 def format_ner_readable(entities: dict) -> str:
     lines = []
@@ -83,7 +62,6 @@ def process_pdf(pdf_file):
 
     extracted_entities = extract_entities(text)
     ner_output = format_ner_readable(extracted_entities)
-    fields_output = format_field_predictions(field_predictions)
 
     logger.info("PDF processing finished")
 
@@ -91,7 +69,14 @@ def process_pdf(pdf_file):
         summary,
         l4_text,
         ner_output,
-        fields_output,
+        field_predictions.get("AppealKind", ""),
+        field_predictions.get("ItemID", ""),
+        field_predictions.get("DeliveryTypeId", ""),
+        field_predictions.get("RegistrationPlaceId", ""),
+        field_predictions.get("PetitionerDistrict", ""),
+        field_predictions.get("PetitionerCategory", ""),
+        field_predictions.get("StatusId", ""),
+        field_predictions.get("ConsiderationType", ""),
     )
 
 
@@ -109,12 +94,22 @@ with gr.Blocks(title="Классификатор обращений") as demo:
             summary_text = gr.Textbox(label="Суммаризация", lines=4)
             l4_output = gr.Textbox(label="Категория(-и) обращения")
             ner_output = gr.Textbox(label="Личные данные заявителя", lines=7)
-            fields_output = gr.Textbox(label="Классифицированные поля", lines=10)
+            appeal_kind = gr.Textbox(label="Вид обращения")
+            item_id = gr.Textbox(label="Форма обращения")
+            delivery_type = gr.Textbox(label="Источник поступления")
+            registration_place = gr.Textbox(label="Место события")
+            petitioner_district = gr.Textbox(label="Район проживания заявителя")
+            petitioner_category = gr.Textbox(label="Категория заявителя")
+            status_id = gr.Textbox(label="Тип обращения")
+            consideration_type = gr.Textbox(label="Первичное/повторное")
 
     btn.click(
         fn=process_pdf,
         inputs=pdf_input,
-        outputs=[summary_text, l4_output, ner_output, fields_output]
+        outputs=[summary_text, l4_output, ner_output,
+                 appeal_kind, item_id, delivery_type,
+                 registration_place, petitioner_district,
+                 petitioner_category, status_id, consideration_type]
     )
 
 if __name__ == "__main__":
