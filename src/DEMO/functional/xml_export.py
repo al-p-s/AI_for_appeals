@@ -9,8 +9,8 @@ from src.DEMO.functional.ner_inference import extract_entities
 
 logger = logging.getLogger(__name__)
 
-REFS_XML_PATH = "../../data/classifier/Все справочники (кроме организаций).xml"
-XML_OUTPUT_DIR = "xmls"
+REFS_XML_PATH = "../../../data/classifier/all_refs(but_orgs).xml"
+XML_OUTPUT_DIR = "../xmls"
 
 # Справочные поля MainData/PetitionerData: field_name (в field_predictions) -> тег в XML.
 # Значение резолвится через справочник (см. load_reference_dicts) - ищем RowID по Name,
