@@ -159,11 +159,8 @@ def parse_l4_codes(l4_text):
     return [line.split(" — ")[0].strip() for line in l4_text.split("\n") if line.strip()]
 
 
-def build_appeal_xml(text, file_name, output_dir=XML_OUTPUT_DIR):
+def build_xml_from_results(summary, l4_codes, field_predictions, entities, file_name, output_dir=XML_OUTPUT_DIR):
     ref_dicts = load_reference_dicts()
-    summary, _, _, l4_text, field_predictions = classify_text(text)
-    entities = extract_entities(text)
-
     root = ET.Element("Data")
 
     def fill_main_data(el):
@@ -173,7 +170,7 @@ def build_appeal_xml(text, file_name, output_dir=XML_OUTPUT_DIR):
         add_text_element(el, "Content", summary)
 
     def fill_question_data(el):
-        for row_id in resolve_question_codes(parse_l4_codes(l4_text), ref_dicts):
+        for row_id in resolve_question_codes(l4_codes, ref_dicts):
             add_text_element(el, "QuestionCode", row_id)
 
     def fill_petitioner_data(el):
@@ -191,6 +188,8 @@ def build_appeal_xml(text, file_name, output_dir=XML_OUTPUT_DIR):
         if container is not None:
             root.append(container)
 
+    # SenderData: пока не заполняем (справочник организаций не подключен)
+
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / f"{Path(file_name).stem}.xml"
@@ -201,6 +200,13 @@ def build_appeal_xml(text, file_name, output_dir=XML_OUTPUT_DIR):
 
     logger.info(f"XML saved: {out_path}")
     return out_path
+
+
+def build_appeal_xml(text, file_name, output_dir=XML_OUTPUT_DIR):
+    summary, _, _, l4_text, field_predictions = classify_text(text)
+    entities = extract_entities(text)
+    l4_codes = parse_l4_codes(l4_text)
+    return build_xml_from_results(summary, l4_codes, field_predictions, entities, file_name, output_dir)
 
 
 if __name__ == "__main__":
