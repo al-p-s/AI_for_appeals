@@ -13,7 +13,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
     handlers=[
-        logging.FileHandler("logs/test_100_pipeline_1340v3.log", encoding="utf-8"),
+        logging.FileHandler("logs/test_100_pipeline_1340_G.log", encoding="utf-8"),
         logging.StreamHandler()
     ]
 )
@@ -177,18 +177,18 @@ def main():
             # Field predictions vs true
             logger.info("Field predictions:")
             for field_name, pred_value in field_predictions.items():
-                gt_value = field_item.get(field_name, "").strip()
+                ggt_value = str(field_item.get(field_name, "")).strip()
                 logger.info(f"  {field_name}: TRUE='{gt_value}' | PRED='{pred_value}'")
             # NER true vs pred
             for ner_label, field_name in NER_TO_FIELD.items():
-                gt_value = field_item.get(field_name, "").strip()
+                gt_value = str(field_item.get(field_name, "")).strip()
                 pred_values = entities.get(ner_label, [])
                 if gt_value or pred_values:
                     logger.info(f"  {ner_label}: TRUE='{gt_value}' | PRED={pred_values}")
 
             # NER field metrics
             for ner_label, field_name in NER_TO_FIELD.items():
-                gt_value = field_item.get(field_name, "").strip().lower()
+                gt_value = str(field_item.get(field_name, "")).strip().lower()
                 if not gt_value:
                     continue
                 ner_total[ner_label] += 1
@@ -197,11 +197,11 @@ def main():
                     ner_correct[ner_label] += 1
 
             for field_name, pred_value in field_predictions.items():
-                gt_value = field_item.get(field_name, "").strip()
+                gt_value = str(field_item.get(field_name, "")).strip()
                 if not gt_value:
                     continue
                 field_total[field_name] += 1
-                if pred_value.strip().lower() == gt_value.lower():
+                if str(pred_value).strip().lower() == gt_value.lower():
                     field_correct[field_name] += 1
 
             # errors

@@ -14,9 +14,9 @@ CATS_L3 = "../../data/classifier/cats3.json"
 CATS_L4 = "../../data/classifier/cats4.json"
 
 GIGACHAT_PATH = "../../models/GigaChat_Lite_NEW"
-KERYX_PATH_L2 = "../../models/KERYX_1223/L2"
-KERYX_PATH_L3 = "../../models/KERYX_1223/L3"
-KERYX_PATH_L4 = "../../models/KERYX_1223/L4"
+KERYX_PATH_L2 = "../../models/KERYX_1340_G/L2"
+KERYX_PATH_L3 = "../../models/KERYX_1340_G/L3"
+KERYX_PATH_L4 = "../../models/KERYX_1340_G/L4"
 
 THRESHOLD_L2 = 0.9
 THRESHOLD_L3 = 0.8
@@ -208,7 +208,7 @@ logger.info("Models ready for inference.")
 def main():
     text = HARDCODED_TEXT
     logger.info("Test inference on hard-code text...")
-    summary, l2, l3, l4 = classify_text(text)
+    summary, l2, l3, l4, fields = classify_text(text)
 
     logger.info("Done")
 
