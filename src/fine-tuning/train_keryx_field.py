@@ -11,7 +11,7 @@ from pathlib import Path
 
 # CONFIG
 
-FIELD_NAME = "PetitionerCategory"
+FIELD_NAME = "RegistrationPlaceId"
 N_NEG = 15 # for StatusId, RegistrationPlaceId, DeliveryTypeId, PetitionerCategory
 # N_NEG = 4 # for AppealKind, ConsiderationType, ItemID, PetitionerDistrict, RegistrationPlaceId
 

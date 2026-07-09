@@ -1,0 +1,52 @@
+Training KERYX-L2
+Loading weights:   0%|          | 0/138 [00:00<?, ?it/s]Loading weights: 100%|##########| 138/138 [00:00<00:00, 5971.28it/s]
+  Epoch 1/5 | loss=0.1638 | acc=95.2%
+  Val: exact=0.7015 jaccard=0.7433 partial=0.8284
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.21s/it]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.21s/it]
+  [UPD] Best model saved (score=0.7015)
+  Epoch 2/5 | loss=0.0841 | acc=97.7%
+  Val: exact=0.7015 jaccard=0.7580 partial=0.8657
+  Epoch 3/5 | loss=0.0458 | acc=98.8%
+  Val: exact=0.7313 jaccard=0.7801 partial=0.8657
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.08s/it]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.08s/it]
+  [UPD] Best model saved (score=0.7313)
+  Epoch 4/5 | loss=0.0227 | acc=99.4%
+  Val: exact=0.7313 jaccard=0.7826 partial=0.8731
+  Epoch 5/5 | loss=0.0070 | acc=99.8%
+  Val: exact=0.7313 jaccard=0.7803 partial=0.8731
+Training KERYX-L3
+Loading weights:   0%|          | 0/138 [00:00<?, ?it/s]Loading weights: 100%|##########| 138/138 [00:00<00:00, 4145.46it/s]
+  Epoch 1/5 | loss=0.2141 | acc=93.6%
+  Val: exact=0.7836 jaccard=0.8367 partial=0.8408
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.03s/it]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.03s/it]
+  [UPD] Best model saved (score=0.7836)
+  Epoch 2/5 | loss=0.0989 | acc=97.1%
+  Val: exact=0.8134 jaccard=0.8541 partial=0.8632
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.14s/it]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.14s/it]
+  [UPD] Best model saved (score=0.8134)
+  Epoch 3/5 | loss=0.0508 | acc=98.4%
+  Val: exact=0.8134 jaccard=0.8528 partial=0.8595
+  Epoch 4/5 | loss=0.0231 | acc=99.3%
+  Val: exact=0.8284 jaccard=0.8715 partial=0.8781
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.22s/it]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.22s/it]
+  [UPD] Best model saved (score=0.8284)
+  Epoch 5/5 | loss=0.0061 | acc=99.8%
+  Val: exact=0.8209 jaccard=0.8640 partial=0.8706
+Training KERYX-L4
+Loading weights:   0%|          | 0/138 [00:00<?, ?it/s]Loading weights: 100%|##########| 138/138 [00:00<00:00, 5586.63it/s]
+  Epoch 1/5 | loss=0.2729 | acc=90.8%
+  Val: exact=0.5299 jaccard=0.6269 partial=0.6822
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.03s/it]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.03s/it]
+  [UPD] Best model saved (score=0.6269)
+  Epoch 2/5 | loss=0.1685 | acc=94.4%
+  Val: exact=0.5448 jaccard=0.6494 partial=0.7058
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.12s/it]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.12s/it]
+  [UPD] Best model saved (score=0.6494)
+  Epoch 3/5 | loss=0.1153 | acc=96.6%
+  Val: exact=0.5224 jaccard=0.6286 partial=0.6841
+  Epoch 4/5 | loss=0.0691 | acc=98.1%
+  Val: exact=0.5522 jaccard=0.6497 partial=0.7009
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.07s/it]Writing model shards: 100%|##########| 1/1 [00:02<00:00,  2.07s/it]
+  [UPD] Best model saved (score=0.6497)
+  Epoch 5/5 | loss=0.0342 | acc=99.0%
+  Val: exact=0.5373 jaccard=0.6404 partial=0.6953

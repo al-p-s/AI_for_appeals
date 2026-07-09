@@ -1,0 +1,52 @@
+C:\Users\Администратор\PycharmProjects\AI_for_appeals\.venv\Lib\site-packages\requests\__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.3) or chardet (6.0.0.post1)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+W0618 21:08:16.495000 6216 Lib\site-packages\torch\utils\flop_counter.py:29] triton not found; flop counting will not work for triton kernels
+Training KERYX-L2
+  Epoch 1/5 | loss=0.1613 | acc=95.6%
+  Val: exact=0.7642 jaccard=0.7927 partial=0.8455
+  [UPD] Best model saved (score=0.7642)
+  Epoch 2/5 | loss=0.0782 | acc=97.9%
+  Val: exact=0.7886 jaccard=0.8022 partial=0.8293
+  [UPD] Best model saved (score=0.7886)
+  Epoch 3/5 | loss=0.0404 | acc=99.0%
+  Val: exact=0.7805 jaccard=0.8022 partial=0.8455
+  Epoch 4/5 | loss=0.0175 | acc=99.5%
+  Val: exact=0.8049 jaccard=0.8238 partial=0.8618
+  [UPD] Best model saved (score=0.8049)
+  Epoch 5/5 | loss=0.0047 | acc=99.9%
+  Val: exact=0.8049 jaccard=0.8279 partial=0.8699
+C:\Users\Администратор\PycharmProjects\AI_for_appeals\.venv\Lib\site-packages\requests\__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.3) or chardet (6.0.0.post1)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+W0618 21:36:57.982000 12856 Lib\site-packages\torch\utils\flop_counter.py:29] triton not found; flop counting will not work for triton kernels
+Training KERYX-L3
+  Epoch 1/5 | loss=0.2269 | acc=93.3%
+  Val: exact=0.8049 jaccard=0.8402 partial=0.8591
+  [UPD] Best model saved (score=0.8049)
+  Epoch 2/5 | loss=0.0993 | acc=97.2%
+  Val: exact=0.8537 jaccard=0.8821 partial=0.8997
+  [UPD] Best model saved (score=0.8537)
+  Epoch 3/5 | loss=0.0524 | acc=98.5%
+  Val: exact=0.8618 jaccard=0.8984 partial=0.9160
+  [UPD] Best model saved (score=0.8618)
+  Epoch 4/5 | loss=0.0222 | acc=99.3%
+  Val: exact=0.8618 jaccard=0.8902 partial=0.9079
+  Epoch 5/5 | loss=0.0052 | acc=99.8%
+  Val: exact=0.8618 jaccard=0.8902 partial=0.9079
+C:\Users\Администратор\PycharmProjects\AI_for_appeals\.venv\Lib\site-packages\requests\__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.3) or chardet (6.0.0.post1)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+W0618 21:54:14.675000 9900 Lib\site-packages\torch\utils\flop_counter.py:29] triton not found; flop counting will not work for triton kernels
+Training KERYX-L4
+  Epoch 1/5 | loss=0.2752 | acc=91.3%
+  Val: exact=0.4553 jaccard=0.5149 partial=0.5379
+  [UPD] Best model saved (score=0.5149)
+  Epoch 2/5 | loss=0.1754 | acc=94.2%
+  Val: exact=0.5203 jaccard=0.5808 partial=0.6016
+  [UPD] Best model saved (score=0.5808)
+  Epoch 3/5 | loss=0.1232 | acc=96.1%
+  Val: exact=0.5366 jaccard=0.6009 partial=0.6253
+  [UPD] Best model saved (score=0.6009)
+  Epoch 4/5 | loss=0.0762 | acc=97.7%
+  Val: exact=0.5366 jaccard=0.5928 partial=0.6104
+  Epoch 5/5 | loss=0.0375 | acc=98.8%
+  Val: exact=0.5610 jaccard=0.6172 partial=0.6389
+  [UPD] Best model saved (score=0.6172)
