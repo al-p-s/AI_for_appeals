@@ -23,25 +23,30 @@ def get_children(cats, parent_code, level):
     return [c for c in cats if c["code"].startswith(prefix + ".")]
 
 
-def classify_level_multi(summary, candidates, tokenizer_model, threshold, prefix=""):
+def classify_level_multi(summary, candidates, tokenizer_model, threshold, prefix="", batch_size=32):
     tokenizer, model = tokenizer_model
-    scores = []
+    names = [prefix + c["name"] for c in candidates]
     logger.info(f"Classification started | candidates={len(candidates)} | threshold={threshold}")
 
-    for c in candidates:
-        enc = tokenizer(summary, prefix + c["name"], return_tensors="pt",
-                         truncation=True, max_length=512).to("cuda")
+    scores = []
+    for i in range(0, len(names), batch_size):
+        batch_names = names[i:i + batch_size]
+        enc = tokenizer(
+            [summary] * len(batch_names), batch_names,
+            return_tensors="pt", truncation=True, max_length=512, padding=True
+        ).to("cuda")
         with torch.no_grad():
             logits = model(**enc).logits
             probs = torch.softmax(logits, dim=-1)
-        scores.append((c, probs[0][0].item()))
+        scores.extend(probs[:, 0].tolist())
 
-    max_score = max(s for _, s in scores)
-    result = [(c, s) for c, s in scores if s >= max_score * threshold]
+    scored = list(zip(candidates, scores))
+    max_score = max(scores)
+    result = [(c, s) for c, s in scored if s >= max_score * threshold]
     logger.info(f"Classification finished | selected={len(result)}")
 
     if not result:
-        result = [max(scores, key=lambda x: x[1])]
+        result = [max(scored, key=lambda x: x[1])]
     return result
 
 
@@ -80,15 +85,18 @@ def classify_hierarchy(summary: str):
     return pred_l2, pred_l3, pred_l4
 
 
-def classify_field(text, candidates, keryx_model):
+def classify_field(text, candidates, keryx_model, batch_size=32):
     tokenizer, model = keryx_model
     scores = []
-    for candidate in candidates:
-        enc = tokenizer(text, candidate, return_tensors="pt",
-                         truncation=True, max_length=512).to("cuda")
+    for i in range(0, len(candidates), batch_size):
+        batch = candidates[i:i + batch_size]
+        enc = tokenizer(
+            [text] * len(batch), batch,
+            return_tensors="pt", truncation=True, max_length=512, padding=True
+        ).to("cuda")
         with torch.no_grad():
             logits = model(**enc).logits
-        scores.append(logits[0, 0].item())
+        scores.extend(logits[:, 0].tolist())
     best_idx = max(range(len(scores)), key=lambda i: scores[i])
     return candidates[best_idx]
 
