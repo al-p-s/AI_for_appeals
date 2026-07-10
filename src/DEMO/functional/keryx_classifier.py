@@ -23,7 +23,7 @@ def get_children(cats, parent_code, level):
     return [c for c in cats if c["code"].startswith(prefix + ".")]
 
 
-def classify_level_multi(summary, candidates, tokenizer_model, threshold, prefix="", batch_size=32):
+def classify_level_multi(summary, candidates, tokenizer_model, threshold, prefix="", batch_size=64):
     tokenizer, model = tokenizer_model
     names = [prefix + c["name"] for c in candidates]
     logger.info(f"Classification started | candidates={len(candidates)} | threshold={threshold}")
@@ -85,7 +85,7 @@ def classify_hierarchy(summary: str):
     return pred_l2, pred_l3, pred_l4
 
 
-def classify_field(text, candidates, keryx_model, batch_size=32):
+def classify_field(text, candidates, keryx_model, batch_size=64):
     tokenizer, model = keryx_model
     scores = []
     for i in range(0, len(candidates), batch_size):
