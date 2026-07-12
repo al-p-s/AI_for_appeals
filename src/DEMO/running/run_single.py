@@ -13,6 +13,7 @@ logging.basicConfig(
 
 from src.DEMO.loading.gigachat_loader import summarize
 from src.DEMO.functional.keryx_classifier import classify_hierarchy, classify_all_fields, format_preds
+from src.DEMO.functional.ner_inference import extract_entities
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,8 @@ def classify_text(text: str):
     logger.info(f"L4 predictions: {[(c['code'], c['name'], round(s, 3)) for c, s in pred_l4]}")
 
     field_predictions = classify_all_fields(text)
+    entities = extract_entities(text)
+    logger.info(f"NER: {entities}")
 
     return (
         summary,
@@ -54,12 +57,13 @@ def classify_text(text: str):
         format_preds(pred_l3),
         format_preds(pred_l4),
         field_predictions,
+        entities,
     )
 
 def main():
     logger.info("=" * 55)
     logger.info("Test inference on hard-coded text...")
-    summary, l2, l3, l4, fields = classify_text(HARDCODED_TEXT)
+    summary, l2, l3, l4, fields, entities = classify_text(HARDCODED_TEXT)
     logger.info("Done")
 
 if __name__ == "__main__":

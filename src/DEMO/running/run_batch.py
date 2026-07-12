@@ -6,7 +6,6 @@ import logging
 from collections import defaultdict
 
 from run_single import classify_text
-from src.DEMO.functional.ner_inference import extract_entities
 
 TEST_DATASET_PATH = "../../../data/sets_to_learn/appeals_w_cats/100_for_test_G.json"
 TARGET_FIELDS_PATH = "../../../data/sets_to_learn/fields/target_fields_test_100.json"
@@ -111,9 +110,9 @@ def main():
         field_item = fields_by_file.get(file_name, {})
 
         try:
-            summary, pred_l2_text, pred_l3_text, pred_l4_text, field_predictions = classify_text(text)
+            summary, _, _, l4_text, field_predictions, entities = classify_text(text)
 
-            pred_codes = parse_pred_codes(pred_l4_text)
+            pred_codes = parse_pred_codes(l4_text)
             pred_set = set(pred_codes)
             pred_l2 = {to_l2(c) for c in pred_codes}
             pred_l3 = {to_l3(c) for c in pred_codes}
@@ -127,7 +126,6 @@ def main():
             metrics_l3.update(pred_l3, true_l3)
             metrics_l4.update(pred_set, true_set)
 
-            entities = extract_entities(text)
             logger.info(f"NER: {entities}")
 
             logger.info("Field predictions:")

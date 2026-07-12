@@ -68,3 +68,29 @@
 2026-07-10 15:31:35,734 | WARNING | [QuestionCode] код '0005.0005.0055.1122' не найден в справочнике, пишем текстом
 2026-07-10 15:31:35,734 | WARNING | [QuestionCode] код '0005.0005.0055.1137' не найден в справочнике, пишем текстом
 2026-07-10 15:31:35,740 | INFO | XML saved: ..\xmls\test_appeal.xml
+2026-07-10 15:39:27,038 | INFO | GigaChat loader: loading model...
+2026-07-10 15:40:18,379 | INFO | GigaChat loader: model ready.
+2026-07-10 15:40:18,388 | INFO | KERYX loader: loading category dictionaries and models...
+2026-07-10 15:40:21,014 | INFO | Field model loaded: AppealKind
+2026-07-10 15:40:21,648 | INFO | Field model loaded: ConsiderationType
+2026-07-10 15:40:22,288 | INFO | Field model loaded: ItemID
+2026-07-10 15:40:22,926 | INFO | Field model loaded: PetitionerDistrict
+2026-07-10 15:40:23,563 | INFO | Field model loaded: RegistrationPlaceId
+2026-07-10 15:40:24,197 | INFO | Field model loaded: StatusId
+2026-07-10 15:40:24,826 | INFO | Field model loaded: DeliveryTypeId
+2026-07-10 15:40:25,458 | INFO | Field model loaded: PetitionerCategory
+2026-07-10 15:40:25,459 | INFO | KERYX loader: all models ready.
+2026-07-10 15:40:25,459 | INFO | =======================================================
+2026-07-10 15:40:25,459 | INFO | Test inference on hard-coded text...
+2026-07-10 15:41:05,947 | INFO | Classification started | candidates=21 | threshold=0.9
+2026-07-10 15:41:14,829 | INFO | Classification finished | selected=1
+2026-07-10 15:41:14,829 | INFO | Classification started | candidates=11 | threshold=0.8
+2026-07-10 15:41:15,479 | INFO | Classification finished | selected=1
+2026-07-10 15:41:15,479 | INFO | Classification started | candidates=25 | threshold=0.8
+2026-07-10 15:41:26,432 | INFO | Classification finished | selected=2
+2026-07-10 15:41:26,432 | INFO | Summary: Татьяна Сергеевна из Челябинска просит помощи у Владимира Путина в решении проблемы аварийного состояния дома на улице Ярославская, 14, где жители уже много лет не получают должного обслуживания и расселения.
+2026-07-10 15:41:26,433 | INFO | L2 predictions: [('0005.0005.0000.0000', 'Жилище', 1.0)]
+2026-07-10 15:41:26,433 | INFO | L3 predictions: [('0005.0005.0055.0000', 'Обеспечение граждан жилищем, пользование жилищным фондом, социальные гарантии в жилищной сфере (за исключением права собственности на жилище)', 1.0)]
+2026-07-10 15:41:26,433 | INFO | L4 predictions: [('0005.0005.0055.1122', 'Переселение из подвалов, бараков, коммуналок, общежитий, аварийных домов, ветхого жилья, санитарно-защитной зоны', 1.0), ('0005.0005.0055.1137', 'Обследование жилого фонда на предмет пригодности для проживания (ветхое и аварийное жилье)', 1.0)]
+2026-07-10 15:44:44,720 | INFO | Field predictions: {'AppealKind': 'Заявление', 'ConsiderationType': '0', 'ItemID': 'в электронной форме', 'PetitionerDistrict': 'не определяется', 'RegistrationPlaceId': 'Ленинский район Челябинского городского округа', 'StatusId': 'Просьба гражданина о содействии в реализации его конституционных прав', 'DeliveryTypeId': 'Заявитель (ОНФ.Помощь)', 'PetitionerCategory': 'категория не установлена'}
+2026-07-10 15:44:44,720 | INFO | Done

@@ -5,7 +5,6 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from src.DEMO.running.run_single import classify_text
-from src.DEMO.functional.ner_inference import extract_entities
 
 logger = logging.getLogger(__name__)
 
@@ -203,8 +202,7 @@ def build_xml_from_results(summary, l4_codes, field_predictions, entities, file_
 
 
 def build_appeal_xml(text, file_name, output_dir=XML_OUTPUT_DIR):
-    summary, _, _, l4_text, field_predictions = classify_text(text)
-    entities = extract_entities(text)
+    summary, _, _, l4_text, field_predictions, entities = classify_text(text)
     l4_codes = parse_l4_codes(l4_text)
     return build_xml_from_results(summary, l4_codes, field_predictions, entities, file_name, output_dir)
 
