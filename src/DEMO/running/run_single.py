@@ -1,6 +1,7 @@
 # single run of full appeal-processing pipeline
 # summarization -> hierarchical classification L2/L3/L4 -> reference fields classification
 
+import re
 import logging
 logging.basicConfig(
     level=logging.INFO,
@@ -37,6 +38,32 @@ HARDCODED_TEXT = """
 ©) Нет\n\nВозраст на момент\nсоздания обращения\n\nОсобые метки сообщения: ap\n\nСистема-источник\n\n
 """
 
+def _clean_email(value: str) -> str:
+    return re.sub(r"\s+", "", value)
+
+def _clean_name(value: str) -> str:
+    value = value.strip(" .")
+    if not value:
+        return value
+    if " " in value:
+        value = value.split()[0]
+    value = re.split(r"(?<=[а-яёa-z])(?=[А-ЯЁA-Z])", value)[0]
+    return value
+
+NER_CLEANERS = {
+    "PERSONAL_EMAIL": _clean_email,
+    "LAST_NAME": _clean_name,
+    "FIRST_NAME": _clean_name,
+    "MIDDLE_NAME": _clean_name,
+}
+
+def postprocess_entities(entities: dict) -> dict:
+    for label, cleaner in NER_CLEANERS.items():
+        if label in entities:
+            cleaned = (cleaner(v) for v in entities[label])
+            entities[label] = list(dict.fromkeys(cleaned))
+    return entities
+
 def classify_text(text: str):
     summary = summarize(text)
 
@@ -49,6 +76,7 @@ def classify_text(text: str):
 
     field_predictions = classify_all_fields(text)
     entities = extract_entities(text)
+    entities = postprocess_entities(entities)
     logger.info(f"NER: {entities}")
 
     return (
