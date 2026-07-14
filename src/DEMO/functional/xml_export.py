@@ -77,21 +77,22 @@ def load_reference_dicts(path=REFS_XML_PATH):
         if group_name in top_groups
     }
 
-    # "Тип обращения": 4 вложенные ItemTypesRow (Заявление/Жалоба/Не обращение/
-    # Предложение) -> AppealKind, их дети (ItemsRow) -> StatusId.
-    # "Код вопроса" - отдельная вложенная группа -> QuestionCode
-    appeal_kind, status_id, question_code = {}, {}, {}
+    # Тип обращения (вложенные группы)
+    appeal_kind, status_id = {}, {}
     tip_obrasheniya = top_groups.get("Тип обращения")
     if tip_obrasheniya is not None:
         for nested in tip_obrasheniya.findall("./ItemTypesRow"):
-            if nested.get("Name") == "Код вопроса":
-                for row in nested.findall("./Items/ItemsRow"):
-                    code = row.get("Name", "").split(" ", 1)[0].strip()
-                    question_code[code] = row.get("RowID")
-                continue
             appeal_kind[nested.get("Name")] = nested.get("RowID")
             for row in nested.findall("./Items/ItemsRow"):
                 status_id[row.get("Name")] = row.get("RowID")
+
+    # Код вопроса - отдельная группа верхнего уровня
+    question_code = {}
+    kod_voprosa = top_groups.get("Код вопроса")
+    if kod_voprosa is not None:
+        for row in kod_voprosa.findall("./Items/ItemsRow"):
+            code = row.get("Name", "").split(" ", 1)[0].strip()
+            question_code[code] = row.get("RowID")
 
     dicts.update(AppealKind=appeal_kind, StatusId=status_id, QuestionCode=question_code)
     _ref_dicts_cache = dicts
@@ -155,7 +156,9 @@ def build_container(tag, fill_fn):
 
 
 def parse_l4_codes(l4_text):
-    return [line.split(" — ")[0].strip() for line in l4_text.split("\n") if line.strip()]
+    if not l4_text:
+        return []
+    return [line.strip().split()[0] for line in l4_text.splitlines() if line.strip()]
 
 
 def build_xml_from_results(summary, l4_codes, field_predictions, entities, file_name, output_dir=XML_OUTPUT_DIR):
