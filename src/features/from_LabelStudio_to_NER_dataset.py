@@ -11,13 +11,24 @@ class LabelStudioToBIOConverter:
 
         self.labels = [
             "O",
+
             "B-LAST_NAME", "I-LAST_NAME",
             "B-FIRST_NAME", "I-FIRST_NAME",
             "B-MIDDLE_NAME", "I-MIDDLE_NAME",
+
             "B-PERSONAL_EMAIL", "I-PERSONAL_EMAIL",
             "B-GOV_EMAIL", "I-GOV_EMAIL",
+
             "B-PHONE_NUMBER", "I-PHONE_NUMBER",
-            "B-ADDRESS", "I-ADDRESS"
+
+            "B-ADDRESS", "I-ADDRESS",
+            "B-POSTAL_CODE", "I-POSTAL_CODE",
+            "B-REGION", "I-REGION",
+            "B-CITY", "I-CITY",
+            "B-STREET", "I-STREET",
+            "B-HOUSE", "I-HOUSE",
+            "B-ROOM", "I-ROOM",
+            "B-DATE", "I-DATE"
         ]
 
         self.label2id = {label: i for i, label in enumerate(self.labels)}

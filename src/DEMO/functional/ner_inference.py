@@ -7,7 +7,7 @@ from transformers import AutoTokenizer, AutoModelForTokenClassification
 logger = logging.getLogger(__name__)
 
 LABEL_MAPPING_PATH = "../../../data/label_mapping.json"
-MODEL_PATH = "../../../models/train_NER_RuModernBert2_0/checkpoint-720"
+MODEL_PATH = "../../../models/train_NER_RuModernBert3_0/checkpoint-720"
 
 SKIP_LABELS = {"GOV_EMAIL"}
 

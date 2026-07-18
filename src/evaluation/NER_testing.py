@@ -15,7 +15,7 @@ with open("../../data/label_mapping.json", "r", encoding="utf-8") as f:
 id2label = {int(k): v for k, v in mapping["id2label"].items()}
 label2id = mapping["label2id"]
 
-model_path = "../../models/train_NER_RuModernBert2_0/checkpoint-720"
+model_path = "../../models/train_NER_RuModernBert3_0/checkpoint-720"
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = AutoModelForTokenClassification.from_pretrained(model_path)
 model.eval()

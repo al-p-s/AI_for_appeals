@@ -77,7 +77,7 @@ def compute_metrics(eval_preds):
     return {"f1": f1_score(true_labels, true_preds, mode="strict", scheme=IOB2)}
 
 training_args = TrainingArguments(
-    output_dir="../../models/train_NER_RuModernBert2_0",
+    output_dir="../../models/train_NER_RuModernBert3_0",
     num_train_epochs=10,
     per_device_train_batch_size=2,
     per_device_eval_batch_size=4,

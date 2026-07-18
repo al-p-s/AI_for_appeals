@@ -4,15 +4,18 @@ import time
 
 from src.features.OCR.pdf_extractor_test import pdf_extract
 
-directory = r'D:/Обращения/second_250/second_250'
+directory = r'D:\OCR_improving\новые выбранные'
 files = os.listdir(directory)
-json_path = "../../../data/all_appeals_new_OCR/appeals250SASHA_23_06.json"
+json_path = "../../../data/OCR_improving/appeals121_20_06_TEST3.json"
 
 all_appeals = []
 
 start_time = time.time()
-
+i = 0
 for folder in files:
+
+    if i > 50:
+        break
 
     folder_path = os.path.join(directory, folder)
     if not os.path.isdir(folder_path):
@@ -32,6 +35,7 @@ for folder in files:
         "text": text
     }
     all_appeals.append(appeal_data)
+    i = i+1
 
 elapsed_time = time.time() - start_time
 print(elapsed_time)

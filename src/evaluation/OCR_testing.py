@@ -99,4 +99,4 @@ def compare(ground_truth_path, ocr_result_path, output_path=None, cer_threshold=
 
 
 if __name__ == "__main__":
-    compare("../../data/OCR_improving/OCR_test.json", "../../data/OCR_improving/appeals121_20_06_TEST2.json", "report_Paddle100new.json", 0.1)
+    compare("../../data/OCR_improving/OCR_test.json", "../../data/OCR_improving/appeals121_20_06_TEST3.json", "report_Paddle200.json", 0.1)
