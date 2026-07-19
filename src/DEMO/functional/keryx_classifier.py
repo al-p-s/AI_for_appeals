@@ -1,12 +1,8 @@
 # classification funcs
 # 1. classify_hierarchy(summary) - cascade multilabel-classification
 # by levels L2 -> L3 -> L4
-# 2. classify_all_fields(text) - additional fileds classification
-# (AppealKind, ItemID, DeliveryTypeId, RegistrationPlaceId, PetitionerDistrict,
-# PetitionerCategory, StatusId, ConsiderationType), each field - separate model.
 
 import logging
-
 import torch
 
 from src.DEMO.loading import keryx_loader as kx
@@ -83,27 +79,3 @@ def classify_hierarchy(summary: str):
                 pred_l4.append((l4, l4_score))
 
     return pred_l2, pred_l3, pred_l4
-
-
-def classify_field(text, candidates, keryx_model, batch_size=64):
-    tokenizer, model = keryx_model
-    scores = []
-    for i in range(0, len(candidates), batch_size):
-        batch = candidates[i:i + batch_size]
-        enc = tokenizer(
-            [text] * len(batch), batch,
-            return_tensors="pt", truncation=True, max_length=512, padding=True
-        ).to("cuda")
-        with torch.no_grad():
-            logits = model(**enc).logits
-        scores.extend(logits[:, 0].tolist())
-    best_idx = max(range(len(scores)), key=lambda i: scores[i])
-    return candidates[best_idx]
-
-
-def classify_all_fields(text: str) -> dict:
-    predictions = {}
-    for field_name, (keryx_model, candidates) in kx.field_models.items():
-        predictions[field_name] = classify_field(text, candidates, keryx_model)
-    logger.info(f"Field predictions: {predictions}")
-    return predictions

@@ -31,7 +31,7 @@ PETITIONER_NER_FIELDS = {
     "LAST_NAME": "PetitionerSurname",
     "FIRST_NAME": "PetitionerName",
     "MIDDLE_NAME": "PetitionerPatronymic",
-    "ADDRESS": "PetitionerAddress",
+    "FULL_ADDRESS": "PetitionerAddress",
     "PERSONAL_EMAIL": "PetitionerEmail",
     "PHONE_NUMBER": "PetitionerPhone",
 }
