@@ -109,10 +109,9 @@ def classify_all_fields_qwen(text: str) -> Dict:
             logger.error("Can't load candidates for fields")
             return {}
 
-        max_len = 6000
-        if len(text) > max_len:
-            text = text[:max_len]
-            logger.info(f"Text shrink up to {max_len} symbols")
+        if len(text) > 8000:
+            text = text[:8000]
+            logger.info(f"Text shrink up to 8000 symbols")
 
         fields_desc = _build_fields_description(field_candidates)
 
