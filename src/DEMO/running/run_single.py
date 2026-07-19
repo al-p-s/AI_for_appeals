@@ -3,6 +3,7 @@
 
 import re
 import logging
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
@@ -13,8 +14,9 @@ logging.basicConfig(
 )
 
 from src.DEMO.loading.gigachat_loader import summarize
-from src.DEMO.functional.keryx_classifier import classify_hierarchy, classify_all_fields, format_preds
-from src.DEMO.functional.ner_inference import extract_entities
+from src.DEMO.functional.keryx_classifier import classify_hierarchy, format_preds
+from src.DEMO.functional.qwen_NER_inference import extract_entities
+from src.DEMO.functional.qwen_REF_classifier import classify_all_fields_qwen
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +40,11 @@ HARDCODED_TEXT = """
 ©) Нет\n\nВозраст на момент\nсоздания обращения\n\nОсобые метки сообщения: ap\n\nСистема-источник\n\n
 """
 
+
 def _clean_email(value: str) -> str:
+    value = value.strip(" ()[]{}:;,.")
     return re.sub(r"\s+", "", value)
+
 
 def _clean_name(value: str) -> str:
     value = value.strip(" .")
@@ -50,21 +55,54 @@ def _clean_name(value: str) -> str:
     value = re.split(r"(?<=[а-яёa-z])(?=[А-ЯЁA-Z])", value)[0]
     return value
 
+
+def _clean_addr_part(value: str) -> str:
+    return value.strip(" .,")
+
+
 NER_CLEANERS = {
     "PERSONAL_EMAIL": _clean_email,
     "LAST_NAME": _clean_name,
     "FIRST_NAME": _clean_name,
     "MIDDLE_NAME": _clean_name,
+    "POSTAL_CODE": _clean_addr_part,
+    "REGION": _clean_addr_part,
+    "CITY": _clean_addr_part,
+    "STREET": _clean_addr_part,
+    "HOUSE": _clean_addr_part,
+    "ROOM": _clean_addr_part,
 }
+
 
 def postprocess_entities(entities: dict) -> dict:
     for label, cleaner in NER_CLEANERS.items():
-        if label in entities:
-            cleaned = (cleaner(v) for v in entities[label])
-            entities[label] = list(dict.fromkeys(cleaned))
+        if label in entities and entities[label]:
+            if isinstance(entities[label], list):
+                cleaned = [cleaner(v) for v in entities[label] if v]
+                entities[label] = list(dict.fromkeys(cleaned))
+            else:
+                entities[label] = cleaner(entities[label])
+
+    address_parts = []
+    address_order = ["POSTAL_CODE", "REGION", "CITY", "STREET", "HOUSE", "ROOM"]
+
+    for key in address_order:
+        if key in entities and entities[key]:
+            value = entities[key]
+            if isinstance(value, list) and value:
+                address_parts.append(value[0])
+            elif isinstance(value, str):
+                address_parts.append(value)
+
+    if address_parts:
+        entities["FULL_ADDRESS"] = [", ".join(address_parts)]
+
+    logger.info(f"Postprocessed entities: {entities}")
     return entities
 
+
 def classify_text(text: str):
+
     summary = summarize(text)
 
     pred_l2, pred_l3, pred_l4 = classify_hierarchy(summary)
@@ -74,7 +112,8 @@ def classify_text(text: str):
     logger.info(f"L3 predictions: {[(c['code'], c['name'], round(s, 3)) for c, s in pred_l3]}")
     logger.info(f"L4 predictions: {[(c['code'], c['name'], round(s, 3)) for c, s in pred_l4]}")
 
-    field_predictions = classify_all_fields(text)
+    field_predictions = classify_all_fields_qwen(text)
+
     entities = extract_entities(text)
     entities = postprocess_entities(entities)
     logger.info(f"NER: {entities}")
@@ -87,6 +126,7 @@ def classify_text(text: str):
         field_predictions,
         entities,
     )
+
 
 def main():
     logger.info("=" * 55)
