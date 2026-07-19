@@ -22,7 +22,6 @@ def get_children(cats, parent_code, level):
 def classify_level_multi(summary, candidates, tokenizer_model, threshold, prefix="", batch_size=64):
     tokenizer, model = tokenizer_model
     names = [prefix + c["name"] for c in candidates]
-    logger.info(f"Classification started | candidates={len(candidates)} | threshold={threshold}")
 
     scores = []
     for i in range(0, len(names), batch_size):
@@ -39,7 +38,6 @@ def classify_level_multi(summary, candidates, tokenizer_model, threshold, prefix
     scored = list(zip(candidates, scores))
     max_score = max(scores)
     result = [(c, s) for c, s in scored if s >= max_score * threshold]
-    logger.info(f"Classification finished | selected={len(result)}")
 
     if not result:
         result = [max(scored, key=lambda x: x[1])]

@@ -21,7 +21,7 @@ def load_field_config(config_path: str = FIELDS_CONFIG_PATH) -> Dict[str, List[s
             else:
                 logger.warning(f"Field {field_name} skipped: no candidates")
 
-        logger.info(f"Loaded number of loaded fileds: {len(field_candidates)}")
+        logger.info(f"Loaded fields to classify: {list(field_candidates.keys())}")
         return field_candidates
 
     except FileNotFoundError:

@@ -18,14 +18,14 @@ NER_TO_FIELD = {
     "MIDDLE_NAME": "PetitionerPatronymic",
     "PERSONAL_EMAIL": "PetitionerEmail",
     "PHONE_NUMBER": "PetitionerPhone",
-    "ADDRESS": "PetitionerAddress",
+    "FULL_ADDRESS": "PetitionerAddress",
 }
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
     handlers=[
-        logging.FileHandler("../logs/run_batch_100.log", encoding="utf-8"),
+        logging.FileHandler("../logs/run_batch_100_QWEN.log", encoding="utf-8"),
         logging.StreamHandler()
     ]
 )
@@ -160,8 +160,8 @@ def main():
 
             total += 1
 
-        except Exception:
-            logger.exception(f"FAILED: {file_name}")
+        except Exception as e:
+            logger.exception(f"FAILED: {file_name} | Error: {e}")
 
     logger.info("=" * 60)
     logger.info("FINAL METRICS")
@@ -173,7 +173,7 @@ def main():
 
     logger.info("=" * 60)
     logger.info("NER FIELD METRICS")
-    logger.info(f"{'Класс':<25} {'Правильно':>10} {'Всего':>8} {'Accuracy':>10}")
+    logger.info(f"{'Class':<25} {'Correct':>10} {'All':>8} {'Accuracy':>10}")
     logger.info("-" * 55)
     total_c, total_t = 0, 0
     for label in sorted(ner_total.keys()):
@@ -182,11 +182,11 @@ def main():
         total_t += t
         logger.info(f"{label:<25} {c:>10} {t:>8} {c / t:>10.3f}")
     logger.info("-" * 55)
-    logger.info(f"{'ИТОГО':<25} {total_c:>10} {total_t:>8} {(total_c / total_t if total_t else 0):>10.3f}")
+    logger.info(f"{'FINAL':<25} {total_c:>10} {total_t:>8} {(total_c / total_t if total_t else 0):>10.3f}")
 
     logger.info("=" * 60)
     logger.info("FIELD CLASSIFICATION METRICS")
-    logger.info(f"{'Поле':<35} {'Правильно':>10} {'Всего':>8} {'Accuracy':>10}")
+    logger.info(f"{'Field':<35} {'Correct':>10} {'All':>8} {'Accuracy':>10}")
     logger.info("-" * 65)
     total_fc, total_ft = 0, 0
     for field_name in sorted(field_total.keys()):

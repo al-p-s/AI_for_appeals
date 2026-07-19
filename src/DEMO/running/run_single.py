@@ -4,19 +4,19 @@
 import re
 import logging
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    handlers=[
-        logging.FileHandler("../logs/run_single.log", encoding="utf-8"),
-        logging.StreamHandler()
-    ]
-)
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format="%(asctime)s | %(levelname)s | %(message)s",
+#     handlers=[
+#         logging.FileHandler("../logs/run_single.log", encoding="utf-8"),
+#         logging.StreamHandler()
+#     ]
+# )
 
-from src.DEMO.loading.gigachat_loader import summarize
+from src.DEMO.functional.make_qwen_summary import summarize
 from src.DEMO.functional.keryx_classifier import classify_hierarchy, format_preds
+from src.DEMO.functional.qwen_REF_classification import classify_all_fields_qwen
 from src.DEMO.functional.qwen_NER_inference import extract_entities
-from src.DEMO.functional.qwen_REF_classifier import classify_all_fields_qwen
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +42,9 @@ HARDCODED_TEXT = """
 
 
 def _clean_email(value: str) -> str:
+    value = re.sub(r"\s+", "", value)
     value = value.strip(" ()[]{}:;,.")
-    return re.sub(r"\s+", "", value)
+    return value
 
 
 def _clean_name(value: str) -> str:
@@ -53,7 +54,7 @@ def _clean_name(value: str) -> str:
     if " " in value:
         value = value.split()[0]
     value = re.split(r"(?<=[а-яёa-z])(?=[А-ЯЁA-Z])", value)[0]
-    return value
+    return value.capitalize()
 
 
 def _clean_addr_part(value: str) -> str:
@@ -61,6 +62,7 @@ def _clean_addr_part(value: str) -> str:
 
 
 NER_CLEANERS = {
+    "GOV_EMAIL": _clean_email,
     "PERSONAL_EMAIL": _clean_email,
     "LAST_NAME": _clean_name,
     "FIRST_NAME": _clean_name,
@@ -116,7 +118,6 @@ def classify_text(text: str):
 
     entities = extract_entities(text)
     entities = postprocess_entities(entities)
-    logger.info(f"NER: {entities}")
 
     return (
         summary,

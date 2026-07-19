@@ -19,9 +19,9 @@ NER_PROMPT = """Ты — система извлечения именованн�
 - FIRST_NAME — имя
 - LAST_NAME — фамилия
 - MIDDLE_NAME — отчество
-- PHONE_NUMBER — список телефонов
+- PHONE_NUMBER — список личных телефонов заявителя
 - PERSONAL_EMAIL — личные email (gmail, yandex, mail.ru и т.п.)
-- GOV_EMAIL — гос/корпоративные email
+- GOV_EMAIL — государственные/корпоративные email. как правило те, НА ЧЬЕ имя идет заялвение, а НЕ ОТ ЧЬЕГО
 - POSTAL_CODE — почтовый индекс
 - REGION — субъект РФ (область, край, республика и т.д.)
 - CITY — населённый пункт
@@ -29,12 +29,14 @@ NER_PROMPT = """Ты — система извлечения именованн�
 - HOUSE — номер дома
 - ROOM — квартира, офис, кабинет
 
+ВНИМАНИЕ: ФИО может быть указано в подписи в конце текста. Обязательно извлекай их оттуда.
+
 Текст:
 {text}"""
 
 
 def extract_entities(text: str) -> Dict:
-    logger.info("NER extraction started")
+    logger.info("Start NER by Qwen")
 
     entities = _extract_with_llm(text)
     return _convert_llm_to_pipeline_format(entities)
@@ -125,28 +127,10 @@ def _convert_llm_to_pipeline_format(entities: Dict) -> Dict:
             else:
                 result[key] = [entities[key]]
 
-    address_parts = []
-    if entities.get("POSTAL_CODE"):
-        address_parts.append(entities["POSTAL_CODE"])
-    if entities.get("REGION"):
-        address_parts.append(entities["REGION"])
-    if entities.get("CITY"):
-        address_parts.append(entities["CITY"])
-    if entities.get("STREET"):
-        address_parts.append(entities["STREET"])
-    if entities.get("HOUSE"):
-        address_parts.append(f"д. {entities['HOUSE']}")
-    if entities.get("ROOM"):
-        address_parts.append(f"кв. {entities['ROOM']}")
-
-    if address_parts:
-        result["ADDRESS"] = [", ".join(address_parts)]
-
     for key in ["POSTAL_CODE", "REGION", "CITY", "STREET", "HOUSE", "ROOM"]:
         if entities.get(key):
             result[key] = [entities[key]]
 
-    logger.info(f"Converted entities: {result}")
     return result
 
 
@@ -155,11 +139,8 @@ def format_ner_entities(entities: Dict) -> str:
         return "Key fields not found"
 
     result = []
-    SKIP_LABELS = {"GOV_EMAIL"}
 
     for label, values in entities.items():
-        if label in SKIP_LABELS:
-            continue
         if not values:
             continue
 

@@ -30,11 +30,13 @@ def _get_prompt_template() -> str:
 
 ВАЖНЫЕ ПРАВИЛА:
 1. Выбирай ТОЛЬКО из предложенного списка значений для каждого поля.
-2. Если значение невозможно определить — ставь "не определяется".
-3. ConsiderationType может быть только "0", "1" или "2".
-4. PetitionDistrict — район проживания заявителя.
-5. RegistrationPlaceId — место события/административная единица.
-6. StatusId — это тип/подтип обращения (Заявление, Жалоба и т.д.).
+2. Если значение невозможно определить - ставь null.
+3. ConsiderationType — это статус рассмотрения обращения. Если обращение новое/не рассмотрено — ставь 0,
+если повторное - ставь 1, если неоднократное - ставь 2. Здесь НЕ МОЖЕТ БЫТЬ значения None.
+4. PetitionerDistrict — район проживания заявителя. Определяй ТОЛЬКО если явно указан в тексте.
+5. RegistrationPlaceId — место события (где произошло нарушение/проблема). Определяй ТОЛЬКО если явно указан в тексте.
+6. DeliveryTypeId — источник поступления обращения (откуда пришло).
+Если заявитель писал по email — значит "Заявитель (электронная почта)".
 
 Ответ должен быть ТОЛЬКО JSON без пояснений.
 
@@ -72,7 +74,7 @@ def validate_and_fix_result(result: Dict, field_candidates: Dict[str, List[str]]
         value = result.get(field)
 
         if not value or not isinstance(value, str):
-            validated[field] = "не определяется"
+            validated[field] = None
             continue
 
         if value in candidates:
@@ -82,21 +84,19 @@ def validate_and_fix_result(result: Dict, field_candidates: Dict[str, List[str]]
         value_lower = value.lower().strip()
         found = False
         for candidate in candidates:
-            if candidate == "не определяется":
-                continue
             if value_lower in candidate.lower() or candidate.lower() in value_lower:
                 validated[field] = candidate
                 found = True
                 break
 
         if not found:
-            validated[field] = "не определяется"
+            validated[field] = None
 
     return validated
 
 
 def classify_all_fields_qwen(text: str) -> Dict:
-    logger.info("Start fields classification by Qwen")
+    logger.info("Start REF fields classification by Qwen")
 
     try:
         field_candidates = get_field_candidates()
@@ -122,14 +122,14 @@ def classify_all_fields_qwen(text: str) -> Dict:
 
         if not response:
             logger.warning("Qwen returned empty answer")
-            return {field: "can't be defined" for field in field_candidates}
+            return {field: None for field in field_candidates}
 
         result = parse_json_from_response(response)
 
         if not result:
             logger.warning("Can't extract JSON from LLM answer")
             logger.debug(f"Answer: {response[:500]}...")
-            return {field: "can't be defined" for field in field_candidates}
+            return {field: None for field in field_candidates}
 
         validated = validate_and_fix_result(result, field_candidates)
         logger.info(f"Fields classification complete: {validated}")
