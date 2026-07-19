@@ -31,8 +31,8 @@ def _get_prompt_template() -> str:
 ВАЖНЫЕ ПРАВИЛА:
 1. Выбирай ТОЛЬКО из предложенного списка значений для каждого поля.
 2. Если значение невозможно определить - ставь null.
-3. ConsiderationType — это статус рассмотрения обращения. Если обращение новое/не рассмотрено — ставь 0,
-если повторное - ставь 1, если неоднократное - ставь 2. Здесь НЕ МОЖЕТ БЫТЬ значения None.
+3. ConsiderationType — это статус рассмотрения обращения. Его значение может быть только 0, 1 или 2. (0 - обращение новое/не рассмотрено,
+1 - повторное обращение, 2 - неоднократное обращение)
 4. PetitionerDistrict — район проживания заявителя. Определяй ТОЛЬКО если явно указан в тексте.
 5. RegistrationPlaceId — место события (где произошло нарушение/проблема). Определяй ТОЛЬКО если явно указан в тексте.
 6. DeliveryTypeId — источник поступления обращения (откуда пришло).
@@ -74,7 +74,12 @@ def validate_and_fix_result(result: Dict, field_candidates: Dict[str, List[str]]
         value = result.get(field)
 
         if not value or not isinstance(value, str):
-            validated[field] = None
+            if field == "PetitionerCategory":
+                validated[field] = "категория не установлена"
+            elif field == "RegistrationPlaceId":
+                validated[field] = "Иное"
+            else:
+                validated[field] = None
             continue
 
         if value in candidates:

@@ -13,7 +13,7 @@ NER_PROMPT = """Ты — система извлечения именованн�
 Извлеки из текста персональные данные и верни ТОЛЬКО JSON без пояснений.
 
 Схема JSON:
-{{"FIRST_NAME": null, "LAST_NAME": null, "MIDDLE_NAME": null, "PHONE_NUMBER": [], "PERSONAL_EMAIL": [], "GOV_EMAIL": [], "POSTAL_CODE": null, "REGION": null, "CITY": null, "STREET": null, "HOUSE": null, "ROOM": null}}
+{{"FIRST_NAME": null, "LAST_NAME": null, "MIDDLE_NAME": null, "PHONE_NUMBER": [], "PERSONAL_EMAIL": [], "GOV_EMAIL": [], "POSTAL_CODE": null, "REGION": null, "CITY": null, "STREET": null, "HOUSE": null, "ROOM": null, "DATE": null}}
 
 Правила:
 - FIRST_NAME — имя
@@ -21,15 +21,20 @@ NER_PROMPT = """Ты — система извлечения именованн�
 - MIDDLE_NAME — отчество
 - PHONE_NUMBER — список личных телефонов заявителя
 - PERSONAL_EMAIL — личные email (gmail, yandex, mail.ru и т.п.)
-- GOV_EMAIL — государственные/корпоративные email. как правило те, НА ЧЬЕ имя идет заялвение, а НЕ ОТ ЧЬЕГО
+- GOV_EMAIL — государственные/корпоративные email. Как правило те, НА ЧЬЕ имя идет заялвение, а НЕ ОТ ЧЬЕГО
 - POSTAL_CODE — почтовый индекс
 - REGION — субъект РФ (область, край, республика и т.д.)
 - CITY — населённый пункт
 - STREET — улица, проспект, переулок и т.д.
 - HOUSE — номер дома
 - ROOM — квартира, офис, кабинет
+- DATE — дата из текста в формате ISO 8601: YYYY-MM-DDTHH:MM:SS.000. Если время не указано, ставь полночь (T00:00:00.000).
 
 ВНИМАНИЕ: ФИО может быть указано в подписи в конце текста. Обязательно извлекай их оттуда.
+Дата может быть указана в обращении в разных форматах:
+- "21.02.2025" -> "2025-02-21T00:00:00.000"
+- "21 февраля 2025" -> "2025-02-21T00:00:00.000"
+- "2025-02-21" -> "2025-02-21T00:00:00.000"
 
 Текст:
 {text}"""
@@ -109,14 +114,15 @@ def _empty_result() -> Dict:
         "CITY": None,
         "STREET": None,
         "HOUSE": None,
-        "ROOM": None
+        "ROOM": None,
+        "DATE": None
     }
 
 
 def _convert_llm_to_pipeline_format(entities: Dict) -> Dict:
     result = {}
 
-    for key in ["FIRST_NAME", "LAST_NAME", "MIDDLE_NAME"]:
+    for key in ["FIRST_NAME", "LAST_NAME", "MIDDLE_NAME", "DATE"]:
         if entities.get(key):
             result[key] = [entities[key]]
 

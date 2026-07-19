@@ -19,6 +19,7 @@ NER_TO_FIELD = {
     "PERSONAL_EMAIL": "PetitionerEmail",
     "PHONE_NUMBER": "PetitionerPhone",
     "FULL_ADDRESS": "PetitionerAddress",
+    "DATE": "PetitionerDate",
 }
 
 logging.basicConfig(
@@ -152,6 +153,13 @@ def main():
                 if not gt_value:
                     continue
                 field_total[field_name] += 1
+
+                # PetitionerCategory synonyms
+                if field_name == "PetitionerCategory":
+                    if gt_value.lower() == "другие категории" and str(
+                            pred_value).strip().lower() == "категория не установлена":
+                        field_correct[field_name] += 1
+                        continue
                 if str(pred_value).strip().lower() == gt_value.lower():
                     field_correct[field_name] += 1
 
