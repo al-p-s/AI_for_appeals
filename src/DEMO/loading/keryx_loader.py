@@ -24,9 +24,9 @@ THRESHOLD_L2 = 0.9
 THRESHOLD_L3 = 0.8
 THRESHOLD_L4 = 0.8
 
-# high-level cats scores
-ABS_THRESHOLD_L2 = 0.1  # lower -> don't go to L3
-ABS_THRESHOLD_L3 = 0.1  # lower -> don't go to L4
+# # high-level cats scores
+# ABS_THRESHOLD_L2 = 0.1  # lower -> don't go to L3
+# ABS_THRESHOLD_L3 = 0.1  # lower -> don't go to L4
 
 
 def load_json(path):

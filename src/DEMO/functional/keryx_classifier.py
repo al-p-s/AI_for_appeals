@@ -49,9 +49,6 @@ def classify_hierarchy(summary: str):
 
     pred_l3 = []
     for l2, l2_score in pred_l2:
-        if l2_score < kx.ABS_THRESHOLD_L2:
-            logger.info(f"Skip L3 for {l2['code']} (score={l2_score:.3f})")
-            continue
         cands_l3 = get_children(kx.cats_l3, l2["code"], 2)
         l2_name = kx.name_by_code.get(l2["code"], "")
         if cands_l3:
@@ -62,9 +59,6 @@ def classify_hierarchy(summary: str):
 
     pred_l4 = []
     for l3, l3_score in pred_l3:
-        if l3_score < kx.ABS_THRESHOLD_L3:
-            logger.info(f"Skip L4 for {l3['code']} (score={l3_score:.3f})")
-            continue
         cands_l4 = get_children(kx.cats_l4, l3["code"], 3)
         l3_name = kx.name_by_code.get(l3["code"], "")
         l2_code = ".".join(l3["code"].split(".")[:2]) + ".0000.0000"
