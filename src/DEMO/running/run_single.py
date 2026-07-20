@@ -4,18 +4,18 @@
 import re
 import logging
 
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format="%(asctime)s | %(levelname)s | %(message)s",
-#     handlers=[
-#         logging.FileHandler("../logs/run_single.log", encoding="utf-8"),
-#         logging.StreamHandler()
-#     ]
-# )
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    handlers=[
+        logging.FileHandler("../logs/run_single.log", encoding="utf-8"),
+        logging.StreamHandler()
+    ]
+)
 
 from src.DEMO.functional.make_qwen_summary import summarize
 from src.DEMO.functional.keryx_classifier import classify_hierarchy, format_preds
-from src.DEMO.functional.qwen_REF_classification import classify_all_fields_qwen
+from src.DEMO.functional.keryx_REF_classification import classify_all_fields
 from src.DEMO.functional.qwen_NER_inference import extract_entities
 
 logger = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ def classify_text(text: str):
     logger.info(f"L3 predictions: {[(c['code'], c['name'], round(s, 3)) for c, s in pred_l3]}")
     logger.info(f"L4 predictions: {[(c['code'], c['name'], round(s, 3)) for c, s in pred_l4]}")
 
-    field_predictions = classify_all_fields_qwen(text)
+    field_predictions = classify_all_fields(text)
 
     entities = extract_entities(text)
     entities = postprocess_entities(entities)

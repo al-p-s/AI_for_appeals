@@ -13876,3 +13876,124 @@ AttributeError: 'list' object has no attribute 'strip'
 2026-07-19 20:49:08,487 | INFO | ИТОГО                                      237      695      0.341
 2026-07-19 20:49:08,489 | INFO | Errors saved to ../logs/classification_errors.json
 2026-07-19 20:49:08,489 | INFO | Dataset evaluation finished
+2026-07-19 21:22:05,124 | INFO | Qwen is ready
+2026-07-19 21:22:11,017 | INFO | KERYX loader: loading category dictionaries and models...
+2026-07-19 21:22:16,589 | INFO | KERYX loader: all models ready.
+2026-07-19 21:22:16,591 | INFO | Field config loaded
+2026-07-19 21:22:16,594 | INFO | =======================================================
+2026-07-19 21:22:16,594 | INFO | Test inference on hard-coded text...
+2026-07-19 21:22:16,595 | INFO | Qwen summarization started
+2026-07-19 21:22:16,603 | INFO | LM Studio API available
+2026-07-19 21:22:16,603 | INFO | Qwen loaded: qwen/qwen3.5-9b
+2026-07-19 21:22:17,829 | INFO | Summarization complete
+2026-07-19 21:22:18,192 | INFO | Summary: Гражданка Татьяна Сергеевна обращается к Владимиру Владимировичу с просьбой срочно расселить жителей аварийного дома №14 по улице Ярославской в Челябинске, так как здание находится в критическом состоянии без воды и отопления, а управляющая компания годами не выполняет обещания о переселении.
+2026-07-19 21:22:18,192 | INFO | L2 predictions: [('0005.0005.0000.0000', 'Жилище', 1.0)]
+2026-07-19 21:22:18,192 | INFO | L3 predictions: [('0005.0005.0055.0000', 'Обеспечение граждан жилищем, пользование жилищным фондом, социальные гарантии в жилищной сфере (за исключением права собственности на жилище)', 1.0), ('0005.0005.0056.0000', 'Коммунальное хозяйство', 1.0)]
+2026-07-19 21:22:18,192 | INFO | L4 predictions: [('0005.0005.0055.1122', 'Переселение из подвалов, бараков, коммуналок, общежитий, аварийных домов, ветхого жилья, санитарно-защитной зоны', 1.0), ('0005.0005.0056.1156', 'Перебои в теплоснабжении', 0.998), ('0005.0005.0056.1164', 'Управляющие организации, товарищества собственников жилья и иные формы управления собственностью', 0.999)]
+2026-07-19 21:22:18,192 | INFO | Start REF fields classification by Qwen
+2026-07-19 21:22:18,201 | INFO | Loaded fields to classify: ['AppealKind', 'ConsiderationType', 'ItemID', 'PetitionerDistrict', 'RegistrationPlaceId', 'StatusId', 'DeliveryTypeId', 'PetitionerCategory']
+2026-07-19 21:22:19,887 | INFO | Fields classification complete: {'AppealKind': 'Заявление', 'ConsiderationType': None, 'ItemID': 'телефон', 'PetitionerDistrict': None, 'RegistrationPlaceId': None, 'StatusId': 'Просьба гражданина о содействии в реализации его конституционных прав', 'DeliveryTypeId': 'Заявитель (электронная почта)', 'PetitionerCategory': None}
+2026-07-19 21:22:19,887 | INFO | Start NER by Qwen
+2026-07-19 21:22:22,236 | INFO | LLM extracted entites: ['FIRST_NAME', 'LAST_NAME', 'MIDDLE_NAME', 'PHONE_NUMBER', 'PERSONAL_EMAIL', 'GOV_EMAIL', 'POSTAL_CODE', 'REGION', 'CITY', 'STREET', 'HOUSE', 'ROOM', 'DATE']
+2026-07-19 21:22:22,237 | INFO | Postprocessed entities: {'FIRST_NAME': ['Татьяна'], 'LAST_NAME': ['Гитоева'], 'MIDDLE_NAME': ['Сергеевна'], 'DATE': ['2025-03-17T00:00:00.000'], 'GOV_EMAIL': ['muvaveva—GU@mail.ru'], 'PHONE_NUMBER': ['+7(952)501-27-95'], 'REGION': ['Челябинская область'], 'CITY': ['Челябинск'], 'STREET': ['улица Ярославская'], 'HOUSE': ['14'], 'FULL_ADDRESS': ['Челябинская область, Челябинск, улица Ярославская, 14']}
+2026-07-19 21:22:22,238 | INFO | Done
+2026-07-20 15:35:53,683 | INFO | Qwen is ready
+2026-07-20 15:36:05,089 | INFO | Field model loaded: AppealKind
+2026-07-20 15:36:05,956 | INFO | Field model loaded: ConsiderationType
+2026-07-20 15:36:06,828 | INFO | Field model loaded: ItemID
+2026-07-20 15:36:07,701 | INFO | Field model loaded: PetitionerDistrict
+2026-07-20 15:36:08,561 | INFO | Field model loaded: RegistrationPlaceId
+2026-07-20 15:36:09,484 | INFO | Field model loaded: StatusId
+2026-07-20 15:36:10,489 | INFO | Field model loaded: DeliveryTypeId
+2026-07-20 15:36:11,567 | INFO | Field model loaded: PetitionerCategory
+2026-07-20 15:36:11,567 | INFO | KERYX loader: all models ready.
+2026-07-20 15:36:11,569 | INFO | Field config loaded
+2026-07-20 15:36:11,572 | INFO | =======================================================
+2026-07-20 15:36:11,572 | INFO | Test inference on hard-coded text...
+2026-07-20 15:36:11,572 | INFO | Qwen summarization started
+2026-07-20 15:36:11,581 | INFO | LM Studio API available
+2026-07-20 15:36:11,581 | INFO | Qwen loaded: qwen/qwen3.5-9b
+2026-07-20 15:36:13,218 | INFO | Summarization complete
+2026-07-20 15:36:13,857 | INFO | Summary: Гражданка Татьяна Сергеевна обращается к Владимиру Владимировичу с просьбой ускорить расселение жителей аварийного дома №14 по улице Ярославской в Челябинске, так как здание находится в критическом состоянии без воды и отопления, а управляющая компания годами не выполняет обещания.
+2026-07-20 15:36:13,857 | INFO | L2 predictions: [('0005.0005.0000.0000', 'Жилище', 1.0)]
+2026-07-20 15:36:13,857 | INFO | L3 predictions: [('0005.0005.0055.0000', 'Обеспечение граждан жилищем, пользование жилищным фондом, социальные гарантии в жилищной сфере (за исключением права собственности на жилище)', 1.0), ('0005.0005.0056.0000', 'Коммунальное хозяйство', 1.0)]
+2026-07-20 15:36:13,857 | INFO | L4 predictions: [('0005.0005.0055.1122', 'Переселение из подвалов, бараков, коммуналок, общежитий, аварийных домов, ветхого жилья, санитарно-защитной зоны', 1.0), ('0005.0005.0056.1156', 'Перебои в теплоснабжении', 0.998), ('0005.0005.0056.1164', 'Управляющие организации, товарищества собственников жилья и иные формы управления собственностью', 0.999)]
+2026-07-20 15:36:15,986 | INFO | Field predictions: {'AppealKind': 'Заявление', 'ConsiderationType': 'Повторное', 'ItemID': 'в электронной форме', 'PetitionerDistrict': 'Советский район', 'RegistrationPlaceId': 'Ленинский район Челябинского городского округа', 'StatusId': 'Просьба гражданина о содействии в реализации его конституционных прав', 'DeliveryTypeId': 'Заявитель (ОНФ.Помощь)', 'PetitionerCategory': 'категория не установлена'}
+2026-07-20 15:36:15,986 | INFO | Start NER by Qwen
+2026-07-20 15:36:19,336 | INFO | LLM extracted entites: ['FIRST_NAME', 'LAST_NAME', 'MIDDLE_NAME', 'PHONE_NUMBER', 'PERSONAL_EMAIL', 'GOV_EMAIL', 'POSTAL_CODE', 'REGION', 'CITY', 'STREET', 'HOUSE', 'ROOM', 'DATE']
+2026-07-20 15:36:19,337 | INFO | Postprocessed entities: {'FIRST_NAME': ['Татьяна'], 'LAST_NAME': ['Гитоева'], 'MIDDLE_NAME': ['Сергеевна'], 'DATE': ['2025-03-17T00:00:00.000'], 'GOV_EMAIL': ['muvaveva—GU@mail.ru'], 'PHONE_NUMBER': ['+7(952)501-27-95'], 'REGION': ['Челябинская область'], 'CITY': ['Челябинск'], 'STREET': ['улица Ярославская'], 'HOUSE': ['14'], 'FULL_ADDRESS': ['Челябинская область, Челябинск, улица Ярославская, 14']}
+2026-07-20 15:36:19,337 | INFO | Done
+2026-07-20 16:06:01,344 | INFO | Qwen is ready
+2026-07-20 16:06:12,476 | INFO | Field model loaded: AppealKind
+2026-07-20 16:06:12,935 | INFO | Field model loaded: ConsiderationType
+2026-07-20 16:06:13,391 | INFO | Field model loaded: ItemID
+2026-07-20 16:06:13,855 | INFO | Field model loaded: PetitionerDistrict
+2026-07-20 16:06:14,315 | INFO | Field model loaded: RegistrationPlaceId
+2026-07-20 16:06:14,822 | INFO | Field model loaded: StatusId
+2026-07-20 16:06:15,387 | INFO | Field model loaded: DeliveryTypeId
+2026-07-20 16:06:15,981 | INFO | Field model loaded: PetitionerCategory
+2026-07-20 16:06:15,982 | INFO | KERYX loader: all models ready.
+2026-07-20 16:06:15,983 | INFO | Field config loaded
+2026-07-20 16:06:15,984 | INFO | =======================================================
+2026-07-20 16:06:15,984 | INFO | Test inference on hard-coded text...
+2026-07-20 16:06:15,984 | INFO | Qwen summarization started
+2026-07-20 16:06:15,989 | INFO | LM Studio API available
+2026-07-20 16:06:15,989 | INFO | Qwen loaded: qwen/qwen3.5-9b
+2026-07-20 16:06:17,502 | INFO | Summarization complete
+2026-07-20 16:06:18,165 | INFO | Summary: Гражданка Татьяна Сергеевна Гитоева из Челябинска просит помочь в расселении жильцов аварийного дома №14 по улице Ярославской, так как здание находится в критическом состоянии без воды и отопления, а управляющая компания годами не выполняет обещания.
+2026-07-20 16:06:18,166 | INFO | L2 predictions: [('0005.0005.0000.0000', 'Жилище', 1.0)]
+2026-07-20 16:06:18,166 | INFO | L3 predictions: [('0005.0005.0055.0000', 'Обеспечение граждан жилищем, пользование жилищным фондом, социальные гарантии в жилищной сфере (за исключением права собственности на жилище)', 1.0), ('0005.0005.0056.0000', 'Коммунальное хозяйство', 1.0)]
+2026-07-20 16:06:18,166 | INFO | L4 predictions: [('0005.0005.0055.1122', 'Переселение из подвалов, бараков, коммуналок, общежитий, аварийных домов, ветхого жилья, санитарно-защитной зоны', 1.0), ('0005.0005.0056.1156', 'Перебои в теплоснабжении', 0.998), ('0005.0005.0056.1164', 'Управляющие организации, товарищества собственников жилья и иные формы управления собственностью', 0.999), ('0005.0005.0056.1168', 'Содержание общего имущества (канализация, вентиляция, кровля, ограждающие конструкции, инженерное оборудование, места общего пользования, придомовая территория)', 0.965)]
+2026-07-20 16:06:20,287 | INFO | Field predictions: {'AppealKind': 'Заявление', 'ConsiderationType': 'Повторное', 'ItemID': 'в электронной форме', 'PetitionerDistrict': 'Советский район', 'RegistrationPlaceId': 'Ленинский район Челябинского городского округа', 'StatusId': 'Просьба гражданина о содействии в реализации его конституционных прав', 'DeliveryTypeId': 'Заявитель (ОНФ.Помощь)', 'PetitionerCategory': 'категория не установлена'}
+2026-07-20 16:06:20,287 | INFO | Start NER by Qwen
+2026-07-20 16:06:24,482 | INFO | LLM extracted entites: ['FIRST_NAME', 'LAST_NAME', 'MIDDLE_NAME', 'PHONE_NUMBER', 'PERSONAL_EMAIL', 'GOV_EMAIL', 'POSTAL_CODE', 'REGION', 'CITY', 'STREET', 'HOUSE', 'ROOM', 'DATE']
+2026-07-20 16:06:24,483 | INFO | Postprocessed entities: {'FIRST_NAME': ['Татьяна'], 'LAST_NAME': ['Гитоева'], 'MIDDLE_NAME': ['Сергеевна'], 'DATE': ['2025-03-17T00:00:00.000'], 'GOV_EMAIL': ['muvaveva—GU@mail.ru'], 'PHONE_NUMBER': ['+7(952)501-27-95'], 'REGION': ['Челябинская область'], 'CITY': ['Челябинск'], 'STREET': ['улица Ярославская'], 'HOUSE': ['14'], 'FULL_ADDRESS': ['Челябинская область, Челябинск, улица Ярославская, 14']}
+2026-07-20 16:06:24,484 | INFO | Done
+2026-07-20 16:33:52,284 | INFO | Qwen is ready
+2026-07-20 16:34:03,675 | INFO | Field model loaded: AppealKind
+2026-07-20 16:34:04,220 | INFO | Field model loaded: ConsiderationType
+2026-07-20 16:34:04,708 | INFO | Field model loaded: ItemID
+2026-07-20 16:34:05,183 | INFO | Field model loaded: PetitionerDistrict
+2026-07-20 16:34:05,656 | INFO | Field model loaded: RegistrationPlaceId
+2026-07-20 16:34:06,151 | INFO | Field model loaded: StatusId
+2026-07-20 16:34:06,615 | INFO | Field model loaded: DeliveryTypeId
+2026-07-20 16:34:07,093 | INFO | Field model loaded: PetitionerCategory
+2026-07-20 16:34:07,093 | INFO | KERYX loader: all models ready.
+2026-07-20 16:34:07,097 | INFO | =======================================================
+2026-07-20 16:34:07,097 | INFO | Test inference on hard-coded text...
+2026-07-20 16:34:07,097 | INFO | Qwen summarization started
+2026-07-20 16:34:07,103 | INFO | LM Studio API available
+2026-07-20 16:34:07,103 | INFO | Qwen loaded: qwen/qwen3.5-9b
+2026-07-20 16:34:09,350 | INFO | Summarization complete
+2026-07-20 16:34:10,007 | INFO | Summary: Гражданка Татьяна Сергеевна Гитоева из Челябинска обращается к Владимиру Владимировичу с просьбой ускорить расселение жильцов аварийного дома №14 по улице Ярославской, так как здание находится в критическом состоянии без воды и отопления, а управляющая компания много лет нарушает обещания о переселении.
+2026-07-20 16:34:10,007 | INFO | L2 predictions: [('0005.0005.0000.0000', 'Жилище', 1.0)]
+2026-07-20 16:34:10,007 | INFO | L3 predictions: [('0005.0005.0055.0000', 'Обеспечение граждан жилищем, пользование жилищным фондом, социальные гарантии в жилищной сфере (за исключением права собственности на жилище)', 1.0), ('0005.0005.0056.0000', 'Коммунальное хозяйство', 1.0)]
+2026-07-20 16:34:10,007 | INFO | L4 predictions: [('0005.0005.0055.1122', 'Переселение из подвалов, бараков, коммуналок, общежитий, аварийных домов, ветхого жилья, санитарно-защитной зоны', 1.0), ('0005.0005.0056.1156', 'Перебои в теплоснабжении', 1.0), ('0005.0005.0056.1164', 'Управляющие организации, товарищества собственников жилья и иные формы управления собственностью', 1.0)]
+2026-07-20 16:34:12,083 | INFO | Field predictions: {'AppealKind': 'Заявление', 'ConsiderationType': '0', 'ItemID': 'в электронной форме', 'PetitionerDistrict': 'Советский район', 'RegistrationPlaceId': 'Ленинский район Челябинского городского округа', 'StatusId': 'Просьба гражданина о содействии в реализации его конституционных прав', 'DeliveryTypeId': 'Заявитель (ОНФ.Помощь)', 'PetitionerCategory': 'категория не установлена'}
+2026-07-20 16:34:12,083 | INFO | Start NER by Qwen
+2026-07-20 16:34:16,735 | INFO | LLM extracted entites: ['FIRST_NAME', 'LAST_NAME', 'MIDDLE_NAME', 'PHONE_NUMBER', 'PERSONAL_EMAIL', 'GOV_EMAIL', 'POSTAL_CODE', 'REGION', 'CITY', 'STREET', 'HOUSE', 'ROOM', 'DATE']
+2026-07-20 16:34:16,736 | INFO | Postprocessed entities: {'FIRST_NAME': ['Татьяна'], 'LAST_NAME': ['Гитоево'], 'MIDDLE_NAME': ['Сергеевна'], 'DATE': ['2025-03-17T00:00:00.000'], 'GOV_EMAIL': ['muvaveva—GU@mail.ru'], 'PHONE_NUMBER': ['+7(952)501-27-95'], 'CITY': ['Челябинск'], 'STREET': ['улица Ярославская'], 'HOUSE': ['14'], 'FULL_ADDRESS': ['Челябинск, улица Ярославская, 14']}
+2026-07-20 16:34:16,736 | INFO | Done
+2026-07-20 16:34:28,743 | INFO | Qwen is ready
+2026-07-20 16:34:40,290 | INFO | Field model loaded: AppealKind
+2026-07-20 16:34:40,780 | INFO | Field model loaded: ConsiderationType
+2026-07-20 16:34:41,285 | INFO | Field model loaded: ItemID
+2026-07-20 16:34:41,753 | INFO | Field model loaded: PetitionerDistrict
+2026-07-20 16:34:42,247 | INFO | Field model loaded: RegistrationPlaceId
+2026-07-20 16:34:42,813 | INFO | Field model loaded: StatusId
+2026-07-20 16:34:43,378 | INFO | Field model loaded: DeliveryTypeId
+2026-07-20 16:34:43,973 | INFO | Field model loaded: PetitionerCategory
+2026-07-20 16:34:43,973 | INFO | KERYX loader: all models ready.
+2026-07-20 16:34:43,975 | INFO | Qwen summarization started
+2026-07-20 16:34:43,980 | INFO | LM Studio API available
+2026-07-20 16:34:43,980 | INFO | Qwen loaded: qwen/qwen3.5-9b
+2026-07-20 16:34:45,980 | INFO | Summarization complete
+2026-07-20 16:34:46,812 | INFO | Summary: Гражданка Татьяна Сергеевна Гитоева из Челябинска обращается к Владимиру Владимировичу с просьбой ускорить расселение жителей аварийного дома №14 по улице Ярославской, который годами не обслуживается управляющей компанией и находится в критическом состоянии без воды и отопления.
+2026-07-20 16:34:46,812 | INFO | L2 predictions: [('0005.0005.0000.0000', 'Жилище', 1.0)]
+2026-07-20 16:34:46,812 | INFO | L3 predictions: [('0005.0005.0055.0000', 'Обеспечение граждан жилищем, пользование жилищным фондом, социальные гарантии в жилищной сфере (за исключением права собственности на жилище)', 1.0), ('0005.0005.0056.0000', 'Коммунальное хозяйство', 1.0)]
+2026-07-20 16:34:46,812 | INFO | L4 predictions: [('0005.0005.0055.1122', 'Переселение из подвалов, бараков, коммуналок, общежитий, аварийных домов, ветхого жилья, санитарно-защитной зоны', 1.0), ('0005.0005.0056.1156', 'Перебои в теплоснабжении', 0.997), ('0005.0005.0056.1164', 'Управляющие организации, товарищества собственников жилья и иные формы управления собственностью', 1.0), ('0005.0005.0056.1168', 'Содержание общего имущества (канализация, вентиляция, кровля, ограждающие конструкции, инженерное оборудование, места общего пользования, придомовая территория)', 0.999)]
+2026-07-20 16:34:48,985 | INFO | Field predictions: {'AppealKind': 'Заявление', 'ConsiderationType': '0', 'ItemID': 'в электронной форме', 'PetitionerDistrict': 'Советский район', 'RegistrationPlaceId': 'Ленинский район Челябинского городского округа', 'StatusId': 'Просьба гражданина о содействии в реализации его конституционных прав', 'DeliveryTypeId': 'Заявитель (ОНФ.Помощь)', 'PetitionerCategory': 'категория не установлена'}
+2026-07-20 16:34:48,985 | INFO | Start NER by Qwen
+2026-07-20 16:34:52,143 | INFO | LLM extracted entites: ['FIRST_NAME', 'LAST_NAME', 'MIDDLE_NAME', 'PHONE_NUMBER', 'PERSONAL_EMAIL', 'GOV_EMAIL', 'POSTAL_CODE', 'REGION', 'CITY', 'STREET', 'HOUSE', 'ROOM', 'DATE']
+2026-07-20 16:34:52,144 | INFO | Postprocessed entities: {'FIRST_NAME': ['Татьяна'], 'LAST_NAME': ['Гитоева'], 'MIDDLE_NAME': ['Сергеевна'], 'DATE': ['2025-03-17T00:00:00.000'], 'GOV_EMAIL': ['muvaveva—GU@mail.ru'], 'PHONE_NUMBER': ['+7(952)501-27-95'], 'REGION': ['Челябинская область'], 'CITY': ['Челябинск'], 'STREET': ['улица Ярославская'], 'HOUSE': ['14'], 'FULL_ADDRESS': ['Челябинская область, Челябинск, улица Ярославская, 14']}
+2026-07-20 16:34:52,172 | INFO | XML saved: ..\xmls\test_appeal.xml

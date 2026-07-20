@@ -26,7 +26,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
     handlers=[
-        logging.FileHandler("../logs/run_batch_100_QWEN.log", encoding="utf-8"),
+        logging.FileHandler("../logs/run_batch_100_REF_by_keryx.log", encoding="utf-8"),
         logging.StreamHandler()
     ]
 )
@@ -140,12 +140,14 @@ def main():
                 if gt_value or pred_values:
                     logger.info(f"  {ner_label}: TRUE='{gt_value}' | PRED={pred_values}")
 
-                gt_lower = gt_value.lower()
-                if not gt_lower:
+                if not gt_value:
+                    ner_total[ner_label] += 1
+                    ner_correct[ner_label] += 1
                     continue
+
                 ner_total[ner_label] += 1
                 predicted_lower = [v.lower() for v in pred_values]
-                if gt_lower in predicted_lower:
+                if gt_value.lower() in predicted_lower:
                     ner_correct[ner_label] += 1
 
             for field_name, pred_value in field_predictions.items():

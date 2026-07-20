@@ -11,9 +11,9 @@ from pathlib import Path
 
 # CONFIG
 
-FIELD_NAME = "RegistrationPlaceId"
-N_NEG = 15 # for StatusId, RegistrationPlaceId, DeliveryTypeId, PetitionerCategory
-# N_NEG = 4 # for AppealKind, ConsiderationType, ItemID, PetitionerDistrict, RegistrationPlaceId
+FIELD_NAME = "ConsiderationType"
+# N_NEG = 15 # for StatusId, RegistrationPlaceId, DeliveryTypeId, PetitionerCategory
+N_NEG = 4 # for AppealKind, ConsiderationType, ItemID, PetitionerDistrict, RegistrationPlaceId
 
 FIELDS_CONFIG_PATH = "../../data/classifier/category_fields.json"
 with open(FIELDS_CONFIG_PATH, encoding="utf-8") as f:

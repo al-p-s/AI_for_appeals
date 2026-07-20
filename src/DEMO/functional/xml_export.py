@@ -34,6 +34,7 @@ PETITIONER_NER_FIELDS = {
     "FULL_ADDRESS": "PetitionerAddress",
     "PERSONAL_EMAIL": "PetitionerEmail",
     "PHONE_NUMBER": "PetitionerPhone",
+    "DATE": "PetitionerDate",
 }
 
 # Плоские группы справочника (Name внутри Items -> RowID), 1:1 с полями выше

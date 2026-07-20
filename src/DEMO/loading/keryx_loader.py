@@ -19,6 +19,9 @@ KERYX_PATH_L2 = "../../../models/KERYX_1340_G/L2"
 KERYX_PATH_L3 = "../../../models/KERYX_1340_G/L3"
 KERYX_PATH_L4 = "../../../models/KERYX_1340_G/L4"
 
+FIELDS_CONFIG_PATH = "../../../data/classifier/category_fields.json"
+KERYX_FIELDS_DIR = "../../../models/KERYXes_for_fields/KERYX_field_{}"
+
 # thresholds
 THRESHOLD_L2 = 0.9
 THRESHOLD_L3 = 0.8
@@ -39,8 +42,23 @@ def load_keryx(path):
     model = AutoModelForSequenceClassification.from_pretrained(path).to("cuda").eval()
     return tokenizer, model
 
+def load_fields_config(path=FIELDS_CONFIG_PATH):
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
 
-logger.info("KERYX loader: loading category dictionaries and models...")
+
+def load_field_models(fields_config):
+    models = {}
+    for cfg in fields_config:
+        field_name = cfg["field_name"]
+        path = KERYX_FIELDS_DIR.format(field_name)
+        try:
+            models[field_name] = (load_keryx(path), cfg["field_candidates"])
+            logger.info(f"Field model loaded: {field_name}")
+        except Exception as e:
+            logger.warning(f"Field model not found: {field_name} | {e}")
+    return models
+
 
 cats_l2 = load_json(CATS_L2_PATH)["categories"]
 cats_l3 = load_json(CATS_L3_PATH)["categories"]
@@ -50,5 +68,8 @@ name_by_code = {c["code"]: c["name"] for c in cats_l2 + cats_l3 + cats_l4}
 keryx_l2 = load_keryx(KERYX_PATH_L2)
 keryx_l3 = load_keryx(KERYX_PATH_L3)
 keryx_l4 = load_keryx(KERYX_PATH_L4)
+
+fields_config = load_fields_config()
+field_models = load_field_models(fields_config)
 
 logger.info("KERYX loader: all models ready.")

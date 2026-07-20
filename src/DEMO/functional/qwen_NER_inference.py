@@ -31,6 +31,7 @@ NER_PROMPT = """Ты — система извлечения именованн�
 - DATE — дата из текста в формате ISO 8601: YYYY-MM-DDTHH:MM:SS.000. Если время не указано, ставь полночь (T00:00:00.000).
 
 ВНИМАНИЕ: ФИО может быть указано в подписи в конце текста. Обязательно извлекай их оттуда.
+
 Дата может быть указана в обращении в разных форматах:
 - "21.02.2025" -> "2025-02-21T00:00:00.000"
 - "21 февраля 2025" -> "2025-02-21T00:00:00.000"
@@ -124,18 +125,30 @@ def _convert_llm_to_pipeline_format(entities: Dict) -> Dict:
 
     for key in ["FIRST_NAME", "LAST_NAME", "MIDDLE_NAME", "DATE"]:
         if entities.get(key):
-            result[key] = [entities[key]]
+            if isinstance(entities[key], list):
+                result[key] = [str(v) for v in entities[key] if v]
+            else:
+                result[key] = [str(entities[key])]
 
     for key in ["PERSONAL_EMAIL", "GOV_EMAIL", "PHONE_NUMBER"]:
         if entities.get(key):
             if isinstance(entities[key], list):
-                result[key] = entities[key]
+                flat_list = []
+                for item in entities[key]:
+                    if isinstance(item, list):
+                        flat_list.extend([str(v) for v in item if v])
+                    elif item:
+                        flat_list.append(str(item))
+                result[key] = flat_list
             else:
-                result[key] = [entities[key]]
+                result[key] = [str(entities[key])]
 
     for key in ["POSTAL_CODE", "REGION", "CITY", "STREET", "HOUSE", "ROOM"]:
         if entities.get(key):
-            result[key] = [entities[key]]
+            if isinstance(entities[key], list):
+                result[key] = [str(v) for v in entities[key] if v]
+            else:
+                result[key] = [str(entities[key])]
 
     return result
 
