@@ -13,7 +13,7 @@ import logging
 #     ]
 # )
 
-from src.DEMO.functional.make_qwen_summary import summarize
+from src.DEMO.functional.qwen_make_summary import summarize
 from src.DEMO.functional.keryx_classifier import classify_hierarchy, format_preds
 from src.DEMO.functional.keryx_REF_classification import classify_all_fields
 from src.DEMO.functional.qwen_NER_inference import extract_entities

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 def format_preds(preds):
-    return "\n".join(f"{c['code']} — {c['name']}" for c, s in preds)
+    return "\n".join(f"{c['code']} {c['name']}" for c, s in preds)
 
 
 def get_children(cats, parent_code, level):

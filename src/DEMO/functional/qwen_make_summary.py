@@ -6,6 +6,7 @@ from src.DEMO.loading.qwen_loader import get_qwen
 logger = logging.getLogger(__name__)
 
 SUMM_PROMPT = """Кратко изложи суть обращения в 1-2 предложениях: кто обращается, на что жалуется или что просит, и почему.
+Важно упомянуть все проблемы, о которых сообщил заявитель.
 
 ОБРАЩЕНИЕ:
 {text}"""
@@ -23,7 +24,7 @@ def summarize(text: str) -> str:
 
         qwen = get_qwen()
 
-        response = qwen.chat(prompt, temperature=0.2, max_tokens=200)
+        response = qwen.chat(prompt, temperature=0.1, max_tokens=200)
 
         if not response:
             logger.warning("Qwen returned empty answer")
