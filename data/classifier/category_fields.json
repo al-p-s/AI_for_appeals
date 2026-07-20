@@ -11,9 +11,9 @@
   {
     "field_name": "ConsiderationType",
     "field_candidates": [
-      "0",
-      "1",
-      "2"
+      "первичное",
+      "повторное",
+      "неоднократное"
     ]
   },
   {
