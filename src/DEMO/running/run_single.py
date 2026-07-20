@@ -4,14 +4,14 @@
 import re
 import logging
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    handlers=[
-        logging.FileHandler("../logs/run_single.log", encoding="utf-8"),
-        logging.StreamHandler()
-    ]
-)
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format="%(asctime)s | %(levelname)s | %(message)s",
+#     handlers=[
+#         logging.FileHandler("../logs/run_single.log", encoding="utf-8"),
+#         logging.StreamHandler()
+#     ]
+# )
 
 from src.DEMO.functional.make_qwen_summary import summarize
 from src.DEMO.functional.keryx_classifier import classify_hierarchy, format_preds

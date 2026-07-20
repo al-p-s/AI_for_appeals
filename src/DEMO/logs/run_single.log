@@ -13997,3 +13997,4 @@ AttributeError: 'list' object has no attribute 'strip'
 2026-07-20 16:34:52,143 | INFO | LLM extracted entites: ['FIRST_NAME', 'LAST_NAME', 'MIDDLE_NAME', 'PHONE_NUMBER', 'PERSONAL_EMAIL', 'GOV_EMAIL', 'POSTAL_CODE', 'REGION', 'CITY', 'STREET', 'HOUSE', 'ROOM', 'DATE']
 2026-07-20 16:34:52,144 | INFO | Postprocessed entities: {'FIRST_NAME': ['Татьяна'], 'LAST_NAME': ['Гитоева'], 'MIDDLE_NAME': ['Сергеевна'], 'DATE': ['2025-03-17T00:00:00.000'], 'GOV_EMAIL': ['muvaveva—GU@mail.ru'], 'PHONE_NUMBER': ['+7(952)501-27-95'], 'REGION': ['Челябинская область'], 'CITY': ['Челябинск'], 'STREET': ['улица Ярославская'], 'HOUSE': ['14'], 'FULL_ADDRESS': ['Челябинская область, Челябинск, улица Ярославская, 14']}
 2026-07-20 16:34:52,172 | INFO | XML saved: ..\xmls\test_appeal.xml
+
