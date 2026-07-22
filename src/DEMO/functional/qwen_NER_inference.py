@@ -49,9 +49,9 @@ def extract_entities(text: str) -> Dict:
 def _extract_with_llm(text: str) -> Dict:
 
     try:
-        if len(text) > 8000:
-            text = text[:8000]
-            logger.info(f"Text shrink up to 6000 symbols")
+        # if len(text) > 8000:
+        #     text = text[:8000]
+        #     logger.info(f"Text shrink up to 6000 symbols")
 
         prompt = NER_PROMPT.format(text=text)
 

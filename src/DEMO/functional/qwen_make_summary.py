@@ -16,9 +16,9 @@ def summarize(text: str) -> str:
     logger.info("Qwen summarization started")
 
     try:
-        if len(text) > 3000:
-            text = text[:3000]
-            logger.info(f"Text shrink up to 6000 symbols")
+        # if len(text) > 8000:
+        #     text = text[:8000]
+        #     logger.info(f"Text shrink up to 8000 symbols")
 
         prompt = SUMM_PROMPT.format(text=text)
 
