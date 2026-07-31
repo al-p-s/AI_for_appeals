@@ -21,11 +21,11 @@ def classify_field(text, candidates, keryx_model, batch_size=64):
             [text] * len(batch), batch,
             return_tensors="pt", truncation=True, max_length=512, padding=True
         ).to("cuda")
-        with torch.no_grad():
+        # ponytail: inference_mode is a C++ level speed upgrade over no_grad
+        with torch.inference_mode():
             logits = model(**enc).logits
         scores.extend(logits[:, 0].tolist())
-    best_idx = max(range(len(scores)), key=lambda i: scores[i])
-    return candidates[best_idx]
+    return candidates[scores.index(max(scores))]
 
 
 def classify_all_fields(text: str) -> dict:

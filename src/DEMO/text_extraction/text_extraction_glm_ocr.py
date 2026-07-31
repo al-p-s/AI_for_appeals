@@ -88,7 +88,6 @@ def get_glm_ocr() -> GlmOcrLoader:
 
 
 def pdf_to_images(pdf_path: str, dpi: int = DPI) -> List[Image.Image]:
-    """Рендерит PDF в список PIL-изображений через poppler."""
     return convert_from_path(
         pdf_path,
         dpi=dpi,
@@ -97,7 +96,9 @@ def pdf_to_images(pdf_path: str, dpi: int = DPI) -> List[Image.Image]:
     )
 
 
-def extract_text_from_pdf(pdf_path: str, dpi: int = DPI, prompt: str = DEFAULT_PROMPT) -> str:
+# text_extraction_glm_ocr.py
+def extract_text_from_pdf(pdf_path: str, dpi: int = 150, prompt: str = DEFAULT_PROMPT) -> str:
+
     logger.info(f"OCR started: {pdf_path}")
 
     ocr = get_glm_ocr()

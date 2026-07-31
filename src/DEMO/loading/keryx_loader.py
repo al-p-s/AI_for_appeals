@@ -5,6 +5,7 @@
 import json
 import logging
 
+import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,9 @@ def load_json(path):
 
 def load_keryx(path):
     tokenizer = AutoTokenizer.from_pretrained(path)
-    model = AutoModelForSequenceClassification.from_pretrained(path).to("cuda").eval()
+    model = AutoModelForSequenceClassification.from_pretrained(
+        path, torch_dtype=torch.float16
+    ).to("cuda").eval()
     return tokenizer, model
 
 def load_fields_config(path=FIELDS_CONFIG_PATH):

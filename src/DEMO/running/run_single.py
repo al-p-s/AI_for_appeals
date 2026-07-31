@@ -5,14 +5,14 @@ import re
 import logging
 from pathlib import Path
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    handlers=[
-        logging.FileHandler("../logs/run_single.log", encoding="utf-8"),
-        logging.StreamHandler()
-    ]
-)
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format="%(asctime)s | %(levelname)s | %(message)s",
+#     handlers=[
+#         logging.FileHandler("../logs/run_single.log", encoding="utf-8"),
+#         logging.StreamHandler()
+#     ]
+# )
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
@@ -123,6 +123,9 @@ def classify_text_from_pdf(pdf_path, dpi: int = None):
     else:
         text = extract_text_from_pdf(pdf_path)
     logger.info(f"OCR finished: {pdf_path} | {len(text)} symbols")
+
+    with open("ocr_150dpi_debug.txt", "w", encoding="utf-8") as f:
+        f.write(text)
 
     return classify_text(text)
 
