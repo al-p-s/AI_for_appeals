@@ -1,157 +1,179 @@
+# Классификация справочных полей через Qwen: вместо NLI-подхода KERYX
+# (N forward pass на N кандидатов) - один generative-запрос на поле,
+# модель отвечает строго JSON с номером выбранного варианта.
+#
+# Использование:
+#   from src.DEMO.functional.qwen_REF_classification import classify_fields_by_qwen
+#   predictions = classify_fields_by_qwen(text) # все поля
+#   predictions = classify_fields_by_qwen(text, ["AppealKind"]) # только часть
+
+import re
 import json
 import logging
-import re
 from typing import Dict, List, Optional
 
-from src.DEMO.loading.REF_fields_loader import get_field_candidates
 from src.DEMO.loading.qwen_loader import get_qwen
+from src.DEMO.loading.REF_fields_loader import get_field_candidates
 
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
+# Человекочитаемые названия полей для промпта (см. list.docx).
+# Если поля нет в словаре - в промпт уйдёт сырое имя field_name.
+FIELD_LABELS = {
+    "AppealKind": "Вид обращения",
+    "StatusId": "Тип обращения",
+    "ItemID": "Форма обращения",
+    "DeliveryTypeId": "Источник поступления",
+    "RegistrationPlaceId": "Место события",
+    "ConsiderationType": "Обращение (первичное / повторное / неоднократное)",
+    "PetitionerCategory": "Категория заявителя",
+    "PetitionerDistrict": "Район проживания заявителя",
+}
+
+CONSIDERATION_TYPE_MAPPING = {
+    "первичное": "0",
+    "повторное": "1",
+    "неоднократное": "2",
+}
+
+FIELD_PROMPT = """Определи значение поля "{field_label}" для этого обращения гражданина.
+Выбери РОВНО ОДИН вариант из списка ниже. Если ни один вариант не подходит (совсем не понятно по тексту), то
+ставь null.
+
+Варианты:
+{options_block}
+
+ОБРАЩЕНИЕ:
+{text}
+
+Ответь СТРОГО в формате JSON, без пояснений и без markdown-разметки:
+{{"index": <номер варианта>}}"""
 
 
-def _build_fields_description(field_candidates: Dict[str, List[str]]) -> str:
-    description = []
-    for field, candidates in field_candidates.items():
-        if len(candidates) > 30:
-            short_list = candidates[:5] + ["... (всего " + str(len(candidates)) + ")"]
-            description.append(f"  {field}: {', '.join(short_list)}")
-        else:
-            description.append(f"  {field}: {', '.join(candidates)}")
-    return "\n".join(description)
+def _build_options_block(candidates: List[str]) -> str:
+    return "\n".join(f"{i + 1}. {c}" for i, c in enumerate(candidates))
 
 
-def _get_prompt_template() -> str:
-    return """Ты — система классификации полей обращения.
-
-Проанализируй текст обращения и определи значения для следующих полей.
-
-Доступные поля и их возможные значения:
-{fields_description}
-
-ВАЖНЫЕ ПРАВИЛА:
-1. Выбирай ТОЛЬКО из предложенного списка значений для каждого поля.
-2. ConsiderationType — это статус рассмотрения обращения. Его значение НЕ МОЖЕТ быть null.
-3. PetitionerDistrict — район проживания заявителя. Определяй ТОЛЬКО если явно указан в тексте.
-4. RegistrationPlaceId — место события (где произошло нарушение/проблема). Определяй ТОЛЬКО если явно указан в тексте.
-5. DeliveryTypeId — источник поступления обращения (откуда пришло). Если заявитель писал по email — значит, скорее всего "Заявитель (электронная почта)".
-6. Если значение какого-то поля невозможно определить - ставь null.
-
-Ответ должен быть ТОЛЬКО JSON без пояснений.
-
-Текст:
-{text}"""
+def _build_prompt(text: str, field_label: str, candidates: List[str]) -> str:
+    return FIELD_PROMPT.format(
+        field_label=field_label,
+        options_block=_build_options_block(candidates),
+        text=text[:3000],
+    )
 
 
-def parse_json_from_response(content: str) -> Optional[Dict]:
-    try:
-        return json.loads(content)
-    except:
-        pass
+def _parse_choice_index(response: str, n_candidates: int) -> Optional[int]:
+    if not response:
+        return None
 
-    json_match = re.search(r'\{[^{}]*\}', content, re.DOTALL)
-    if json_match:
-        try:
-            return json.loads(json_match.group())
-        except:
-            pass
+    # 1) пробуем распарсить как чистый JSON
+    idx = _try_parse_json(response.strip(), n_candidates)
+    if idx is not None:
+        return idx
 
-    json_match = re.search(r'\{[^{}]*(\{[^{}]*\}[^{}]*)*\}', content, re.DOTALL)
-    if json_match:
-        try:
-            return json.loads(json_match.group())
-        except:
-            pass
+    # 2) ищем JSON-объект внутри ответа (на случай лишнего текста вокруг)
+    match = re.search(r"\{[^{}]*\}", response, re.DOTALL)
+    if match:
+        idx = _try_parse_json(match.group(), n_candidates)
+        if idx is not None:
+            return idx
 
-    logger.debug(f"Can't find JSON in: {content[:200]}...")
+    # 3) крайний фолбэк - просто первое число в ответе
+    match = re.search(r"\d+", response)
+    if match:
+        raw_idx = int(match.group())
+        if 1 <= raw_idx <= n_candidates:
+            return raw_idx - 1
+
     return None
 
 
-def validate_and_fix_result(result: Dict, field_candidates: Dict[str, List[str]]) -> Dict:
-    validated = {}
-    for field, candidates in field_candidates.items():
-        value = result.get(field)
+def _try_parse_json(candidate_str: str, n_candidates: int) -> Optional[int]:
+    try:
+        data = json.loads(candidate_str)
+    except (json.JSONDecodeError, TypeError):
+        return None
 
-        if not value or not isinstance(value, str):
-            if field == "PetitionerCategory":
-                validated[field] = "категория не установлена"
-            elif field == "RegistrationPlaceId":
-                validated[field] = "Иное"
-            else:
-                validated[field] = None
-            continue
+    if not isinstance(data, dict):
+        return None
 
-        if field == "ConsiderationType":
-            mapping = {
-                "первичное": "0",
-                "повторное": "1",
-                "неоднократное": "2",
-            }
-            value_lower = value.lower().strip()
-            if value_lower in mapping:
-                validated[field] = mapping[value_lower]
-            elif value in candidates:
-                validated[field] = value
-            else:
-                validated[field] = None
-            continue
-
-        if value in candidates:
-            validated[field] = value
-            continue
-
-        value_lower = value.lower().strip()
-        found = False
-        for candidate in candidates:
-            if value_lower in candidate.lower() or candidate.lower() in value_lower:
-                validated[field] = candidate
-                found = True
-                break
-
-        if not found:
-            validated[field] = None
-
-    return validated
-
-
-def classify_all_fields_qwen(text: str) -> Dict:
-    logger.info("Start REF fields classification by Qwen")
+    raw_idx = data.get("index")
+    if raw_idx is None:
+        return None
 
     try:
-        field_candidates = get_field_candidates()
-        if not field_candidates:
-            logger.error("Can't load candidates for fields")
-            return {}
+        raw_idx = int(raw_idx)
+    except (TypeError, ValueError):
+        return None
 
-        if len(text) > 8000:
-            text = text[:8000]
-            logger.info(f"Text shrink up to 8000 symbols")
+    if 1 <= raw_idx <= n_candidates:
+        return raw_idx - 1
+    return None
 
-        fields_desc = _build_fields_description(field_candidates)
 
-        prompt_template = _get_prompt_template()
-        prompt = prompt_template.format(
-            fields_description=fields_desc,
-            text=text
-        )
+def _fallback_by_substring(response: str, candidates: List[str]) -> Optional[int]:
+    if not response:
+        return None
+    response_lower = response.strip().lower()
+    for i, c in enumerate(candidates):
+        if c.strip().lower() in response_lower or response_lower in c.strip().lower():
+            return i
+    return None
 
-        qwen = get_qwen()
-        response = qwen.chat(prompt, max_tokens=1500)
 
-        if not response:
-            logger.warning("Qwen returned empty answer")
-            return {field: None for field in field_candidates}
+def classify_field_by_qwen(
+    text: str,
+    field_name: str,
+    candidates: List[str],
+    field_label: Optional[str] = None,
+) -> Optional[str]:
 
-        result = parse_json_from_response(response)
+    if not candidates:
+        logger.warning(f"[{field_name}] No candidates provided, skip")
+        return None
 
-        if not result:
-            logger.warning("Can't extract JSON from LLM answer")
-            logger.debug(f"Answer: {response[:500]}...")
-            return {field: None for field in field_candidates}
+    label = field_label or FIELD_LABELS.get(field_name, field_name)
+    prompt = _build_prompt(text, label, candidates)
 
-        validated = validate_and_fix_result(result, field_candidates)
-        logger.info(f"Fields classification complete: {validated}")
-        return validated
+    qwen = get_qwen()
+    response = qwen.chat(prompt, temperature=0.0, max_tokens=20)
 
-    except Exception as e:
-        logger.error(f"Fields classification error: {e}", exc_info=True)
-        return {}
+    idx = _parse_choice_index(response, len(candidates))
+    if idx is None:
+        idx = _fallback_by_substring(response, candidates)
+
+    if idx is None:
+        logger.warning(f"[{field_name}] Could not parse Qwen response: '{response}'")
+        return None
+
+    value = candidates[idx]
+    return value
+
+
+def classify_fields_by_qwen(text: str, field_names: Optional[List[str]] = None) -> Dict[str, str]:
+
+    all_candidates = get_field_candidates()
+    field_names = field_names or list(all_candidates.keys())
+
+    predictions = {}
+    for field_name in field_names:
+        candidates = all_candidates.get(field_name)
+        if not candidates:
+            logger.warning(f"[{field_name}] No candidates found in REF_fields_loader, skip")
+            continue
+
+        value = classify_field_by_qwen(text, field_name, candidates)
+        if value is None:
+            continue
+
+        if field_name == "ConsiderationType":
+            value = CONSIDERATION_TYPE_MAPPING.get(value.strip().lower(), value)
+
+        predictions[field_name] = value
+
+    logger.info(f"Qwen field predictions: {predictions}")
+    return predictions
+
+
+logger.info("Qwen REF-field classifier ready")

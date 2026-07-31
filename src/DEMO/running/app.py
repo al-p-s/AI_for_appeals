@@ -1,7 +1,7 @@
 import gradio as gr
 import logging
 
-from src.DEMO.functional.text_extraction import pdf_extract
+from src.DEMO.text_extraction.text_extraction_paddle import pdf_extract
 from src.DEMO.running.run_single import classify_text
 from src.DEMO.functional.xml_export import build_xml_from_results, parse_l4_codes
 

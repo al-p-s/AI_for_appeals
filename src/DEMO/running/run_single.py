@@ -1,44 +1,30 @@
 # single run of full appeal-processing pipeline
-# summarization -> hierarchical classification L2/L3/L4 -> reference fields classification
+# OCR (GLM-OCR) -> summarization -> hierarchical classification L2/L3/L4 -> reference fields classification
 
 import re
 import logging
+from pathlib import Path
 
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format="%(asctime)s | %(levelname)s | %(message)s",
-#     handlers=[
-#         logging.FileHandler("../logs/run_single.log", encoding="utf-8"),
-#         logging.StreamHandler()
-#     ]
-# )
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    handlers=[
+        logging.FileHandler("../logs/run_single.log", encoding="utf-8"),
+        logging.StreamHandler()
+    ]
+)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logger = logging.getLogger(__name__)
 
+from src.DEMO.functional.qwen_REF_classification import classify_fields_by_qwen
+from src.DEMO.text_extraction.text_extraction_glm_ocr import extract_text_from_pdf
 from src.DEMO.functional.qwen_make_summary import summarize
 from src.DEMO.functional.keryx_classifier import classify_hierarchy, format_preds
 from src.DEMO.functional.keryx_REF_classification import classify_all_fields
 from src.DEMO.functional.qwen_NER_inference import extract_entities
 
-logger = logging.getLogger(__name__)
-
-HARDCODED_TEXT = """
-Эбращение № 7320927 a\n\nДата дедлайна по исполнению: 17.03.2\n\n(©) Информация о гражданине Автоопределение @)\nФИО
-гражданина: ©. гитоево_ Татьяна Сергеевна s :\nЭлектронная почта: muvaveva— GU@ mail. ru\n\nНомер телефона:
-“s7sasov2795 = Ot -\n\n+7(952)501-27-95\n\nИНН гражданина:\n\nФИО обратившегося:\n\nАдрес обратившегося: |\n\nСекретно
-О да @ Her\n\n@ География обращения Автоопределение iif)\n\nАдрес источника\n\nФедеральный Округ\n\nРегион\n\n
-Муниципальное\nобразование\n\nАдрес\n\nМ источник обращения\n\nКанал\nПоток\n\nСобытие\n\nДАН И ОРГАНИЗАЦИЙ\nВходящий
-№2 8\n\n8 Информация об исполнителе 19.02 25\n\nОрганизация\n\n9 информация о волонтёре Обработка волонтёром: —\n\nВ
-Ход действий\n\nВолонтёры:\n\nBE текст обращения\nКоличество спама и обсценной лексики: 0 %\n\nМеня зовут Рассчитается
-Татьяна Сергеевна. Я звоню из города Челябинска. Я хотела бы попросить п\nомощи у Владимира Владимировича вопросе
-основе домов улицы Ярославская. Дом четырнадцать.\nДома давным давно в аварийном состоянии, уже практически нет подачи
-нормальной воды, отоплен\nие. Никто не занимается обслуживанием дома два РА, в том числе только управляющая компания
-бе\nрет деньги. Им каждый год обещают, что их расселят, но уже очень много лет их никто не расселяет д\nом, но уже
-стоит на ладан дышит. Вот я хотела бы попросить Владимира Владимировича как-то помо\nчь в решении этого вопроса и уже
-наконец то, чтобы их расстелили. Спасибо большое.\n\nСохранить\n\n\nсуо. организация | | |\n\nРешение исполнителя\n\n
-Ответ исполнителя : Развернуть\n\nТематика обращения\n\nТип категории\n\nКатегория обращения\n\nПодкатегория\n
-обращения\n\n[$] География гражданина Автоопределение ©)\n\nАдрес источника\nФедеральный Округ\n\nРегион\n\n
-Муниципальное\nобразование\n\nАдрес\n(®} Дополнительная информация\n\nСрочно: ©) Да @) Нет Обращались ранее: ©) Да
-©) Нет\n\nВозраст на момент\nсоздания обращения\n\nОсобые метки сообщения: ap\n\nСистема-источник\n\n
-"""
+PDF_FILE_NAME = "../268-5.pdf"
+PDF_PATH = Path(__file__).resolve().parent / PDF_FILE_NAME
 
 
 def _clean_email(value: str) -> str:
@@ -104,7 +90,6 @@ def postprocess_entities(entities: dict) -> dict:
 
 
 def classify_text(text: str):
-
     summary = summarize(text)
 
     pred_l2, pred_l3, pred_l4 = classify_hierarchy(summary)
@@ -115,6 +100,7 @@ def classify_text(text: str):
     logger.info(f"L4 predictions: {[(c['code'], c['name'], round(s, 3)) for c, s in pred_l4]}")
 
     field_predictions = classify_all_fields(text)
+    # field_predictions = classify_fields_by_qwen(text)
 
     entities = extract_entities(text)
     entities = postprocess_entities(entities)
@@ -129,11 +115,28 @@ def classify_text(text: str):
     )
 
 
+def classify_text_from_pdf(pdf_path, dpi: int = None):
+    pdf_path = str(pdf_path)
+    logger.info(f"OCR started: {pdf_path}")
+    if dpi is not None:
+        text = extract_text_from_pdf(pdf_path, dpi=dpi)
+    else:
+        text = extract_text_from_pdf(pdf_path)
+    logger.info(f"OCR finished: {pdf_path} | {len(text)} symbols")
+
+    return classify_text(text)
+
+
 def main():
     logger.info("=" * 55)
-    logger.info("Test inference on hard-coded text...")
-    summary, l2, l3, l4, fields, entities = classify_text(HARDCODED_TEXT)
+    logger.info(f"Inference on: {PDF_PATH}")
+
+    if not PDF_PATH.exists():
+        raise FileNotFoundError(f"PDF not found: {PDF_PATH}")
+
+    summary, l2, l3, l4, fields, entities = classify_text_from_pdf(PDF_PATH)
     logger.info("Done")
+
 
 if __name__ == "__main__":
     main()

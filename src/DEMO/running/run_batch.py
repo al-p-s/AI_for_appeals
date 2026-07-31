@@ -1,16 +1,21 @@
 # batch pipeline run (run_single.classify_text + NER)
 # on test dataset, with metrics calculation, NER and ref. fields
 
+import os
 import json
 import logging
 from collections import defaultdict
+from pathlib import Path
 
+from src.DEMO.text_extraction.text_extraction_glm_ocr import extract_text_from_pdf
 from run_single import classify_text
 
 TEST_DATASET_PATH = "../../../data/sets_to_learn/appeals_w_cats/100_for_test_G.json"
 TARGET_FIELDS_PATH = "../../../data/sets_to_learn/fields/target_fields_test_100.json"
 CATS_L4_PATH = "../../../data/classifier/cats4.json"
 ERRORS_OUTPUT_PATH = "../logs/classification_errors.json"
+
+PDF_DIR = r"D:\Обращения\100_test_appeals"
 
 NER_TO_FIELD = {
     "LAST_NAME": "PetitionerSurname",
@@ -26,10 +31,11 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
     handlers=[
-        logging.FileHandler("../logs/run_batch_100_REF_by_keryx.log", encoding="utf-8"),
+        logging.FileHandler("../logs/run_batch_100_glm_ocr.log", encoding="utf-8"),
         logging.StreamHandler()
     ]
 )
+logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
@@ -49,10 +55,34 @@ def parse_pred_codes(pred_text):
     codes = []
     if pred_text.strip():
         for line in pred_text.split("\n"):
-            code = line.split(" — ")[0].strip()
+            line = line.strip()
+            if not line:
+                continue
+            code = line.split()[0].strip()
             if code:
                 codes.append(code)
     return codes
+
+
+def find_pdf_in_folder(folder_path: Path, file_name: str):
+    if not folder_path.is_dir():
+        logger.warning(f"[{file_name}] Folder not found: {folder_path}")
+        return None
+
+    pdf_files = sorted(folder_path.glob("*.pdf"))
+
+    if not pdf_files:
+        logger.warning(f"[{file_name}] No PDF files in folder: {folder_path}")
+        return None
+
+    if len(pdf_files) > 1:
+        print(f"[MULTIPLE PDFs] {file_name}: {len(pdf_files)} files -> using '{pdf_files[0].name}'")
+        logger.warning(
+            f"[{file_name}] Multiple PDFs found ({len(pdf_files)}), "
+            f"using first: {pdf_files[0].name} | folder: {folder_path}"
+        )
+
+    return pdf_files[0]
 
 
 class LevelMetrics:
@@ -82,6 +112,8 @@ def main():
     logger.info("=" * 60)
     logger.info("Dataset evaluation started")
 
+    pdf_dir = Path(PDF_DIR)
+
     with open(TEST_DATASET_PATH, encoding="utf-8") as f:
         appeals = json.load(f)["appeals"]
 
@@ -100,14 +132,21 @@ def main():
 
     for idx, item in enumerate(appeals, start=1):
         file_name = item.get("file_name", "unknown")
-        text = item.get("text", "")
+
+        logger.info("-" * 60)
+        logger.info(f"[{idx}/{len(appeals)}] Processing: {file_name}")
+
+        pdf_path = find_pdf_in_folder(pdf_dir / file_name, file_name)
+        if pdf_path is None:
+            continue
+
+        text = extract_text_from_pdf(str(pdf_path))
+
         true_codes = normalize_codes(item.get("categories", []))
         true_set = set(true_codes)
         true_l2 = {to_l2(c) for c in true_codes}
         true_l3 = {to_l3(c) for c in true_codes}
 
-        logger.info("-" * 60)
-        logger.info(f"[{idx}/{len(appeals)}] Processing: {file_name}")
         field_item = fields_by_file.get(file_name, {})
 
         try:
