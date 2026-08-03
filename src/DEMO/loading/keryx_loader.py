@@ -4,6 +4,7 @@
 
 import json
 import logging
+from pathlib import Path
 
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -11,17 +12,20 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-# paths
-CATS_L2_PATH = "../../../data/classifier/cats2.json"
-CATS_L3_PATH = "../../../data/classifier/cats3.json"
-CATS_L4_PATH = "../../../data/classifier/cats4.json"
 
-KERYX_PATH_L2 = "../../../models/KERYX_1340_G/L2"
-KERYX_PATH_L3 = "../../../models/KERYX_1340_G/L3"
-KERYX_PATH_L4 = "../../../models/KERYX_1340_G/L4"
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-FIELDS_CONFIG_PATH = "../../../data/classifier/category_fields.json"
-KERYX_FIELDS_DIR = "../../../models/KERYXes_for_fields/KERYX_field_{}"
+CATS_L2_PATH = PROJECT_ROOT / "data" / "classifier" / "cats2.json"
+CATS_L3_PATH = PROJECT_ROOT / "data" / "classifier" / "cats3.json"
+CATS_L4_PATH = PROJECT_ROOT / "data" / "classifier" / "cats4.json"
+
+KERYX_PATH_L2 = PROJECT_ROOT / "models" / "KERYX_1340_G" / "L2"
+KERYX_PATH_L3 = PROJECT_ROOT / "models" / "KERYX_1340_G" / "L3"
+KERYX_PATH_L4 = PROJECT_ROOT / "models" / "KERYX_1340_G" / "L4"
+
+FIELDS_CONFIG_PATH = PROJECT_ROOT / "data" / "classifier" / "category_fields.json"
+
+KERYX_FIELDS_DIR = str(PROJECT_ROOT / "models" / "KERYXes_for_fields" / "KERYX_field_{}")
 
 # thresholds
 THRESHOLD_L2 = 0.9

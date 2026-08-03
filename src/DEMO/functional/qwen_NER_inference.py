@@ -1,75 +1,58 @@
 import json
 import logging
 import re
-import os
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from src.DEMO.loading.qwen_loader import get_qwen
 
 logger = logging.getLogger(__name__)
 
+NER_PROMPT_PERSONAL = """Ты — система извлечения именованных сущностей (NER).
+Извлеки персональные данные и верни ТОЛЬКО JSON.
+Схема: {{"FIRST_NAME": null, "LAST_NAME": null, "MIDDLE_NAME": null, "PHONE_NUMBER": [], "PERSONAL_EMAIL": [], "GOV_EMAIL": [], "DATE": null}}
 
-NER_PROMPT = """Ты — система извлечения именованных сущностей (NER).
-
-Извлеки из текста персональные данные и верни ТОЛЬКО JSON без пояснений.
-
-Схема JSON:
-{{"FIRST_NAME": null, "LAST_NAME": null, "MIDDLE_NAME": null, "PHONE_NUMBER": [], "PERSONAL_EMAIL": [], "GOV_EMAIL": [], "POSTAL_CODE": null, "REGION": null, "CITY": null, "STREET": null, "HOUSE": null, "ROOM": null, "DATE": null}}
-
-Пояснения:
-- FIRST_NAME — имя
-- LAST_NAME — фамилия
-- MIDDLE_NAME — отчество
-ВНИМАНИЕ: ФИО может быть указано в подписи в конце текста. Обязательно извлекай их оттуда.
-- PHONE_NUMBER — список личных телефонов заявителя
-- PERSONAL_EMAIL — личный email (gmail, yandex, mail.ru и т.п.). Т.е. тот, ОТ ЧЬЕГО имени написано заявление.
-- POSTAL_CODE — почтовый индекс
-- REGION — субъект РФ (область, край, республика и т.д.)
-- CITY — населённый пункт
-- STREET — улица, проспект, переулок и т.д.
-- HOUSE — номер дома
-- ROOM — квартира, офис, кабинет
+- FIRST_NAME, LAST_NAME, MIDDLE_NAME — имя, фамилия и отчество исходного автора обращения (заявителя). ИЗВЛЕКАЙ ИХ В ЛЮБОМ СЛУЧАЕ, даже если автор выступает от лица компании (указан как директор, руководитель, представитель ООО/ИП и т.д.). Если сообщение переслано, ищи ФИО изначального автора.
+- PHONE_NUMBER — телефон заявителя. Их может быть несколько.
+- PERSONAL_EMAIL — email заявителя. Сюда относятся любые email-адреса автора обращения, даже если они выглядят как корпоративные или содержат название организации.
+- GOV_EMAIL — email ведомства, администрации или госслужащего, куда направлено обращение или откуда оно переслано.
 - DATE — дата из текста в формате ISO 8601: YYYY-MM-DDTHH:MM:SS.000. Если время не указано, ставь полночь (T00:00:00.000).
-
 Дата может быть указана в обращении в разных форматах:
 - "21.02.2025" -> "2025-02-21T00:00:00.000"
 - "21 февраля 2025" -> "2025-02-21T00:00:00.000"
-- "2025-02-21" -> "2025-02-21T00:00:00.000"
+
+Текст:
+{text}"""
+
+NER_PROMPT_ADDRESS = """Ты — система извлечения именованных сущностей (NER).
+Извлеки географические данные (адрес) и верни ТОЛЬКО JSON.
+Схема: {{"POSTAL_CODE": null, "REGION": null, "CITY": null, "STREET": null, "HOUSE": null, "ROOM": null}}
 
 Текст:
 {text}"""
 
 
 def extract_entities(text: str) -> Dict:
-    logger.info("Start NER by Qwen")
-
+    logger.info("Start NER by Qwen (split prompts)")
     entities = _extract_with_llm(text)
     return _convert_llm_to_pipeline_format(entities)
 
 
 def _extract_with_llm(text: str) -> Dict:
+    qwen = get_qwen()
 
     try:
-        # if len(text) > 8000:
-        #     text = text[:8000]
-        #     logger.info(f"Text shrink up to 6000 symbols")
+        resp_pers = qwen.chat(NER_PROMPT_PERSONAL.format(text=text))
+        resp_addr = qwen.chat(NER_PROMPT_ADDRESS.format(text=text))
 
-        prompt = NER_PROMPT.format(text=text)
+        dict_pers = _parse_json_from_response(resp_pers) if resp_pers else {}
+        dict_addr = _parse_json_from_response(resp_addr) if resp_addr else {}
 
-        qwen = get_qwen()
-        response = qwen.chat(prompt)
+        # Берем пустой шаблон и накатываем сверху то, что нашла сеть
+        result = _empty_result()
+        if isinstance(dict_pers, dict): result.update({k: v for k, v in dict_pers.items() if k in result})
+        if isinstance(dict_addr, dict): result.update({k: v for k, v in dict_addr.items() if k in result})
 
-        if not response:
-            logger.warning("LLM returned empty answer")
-            return _empty_result()
-
-        entities = _parse_json_from_response(response)
-
-        if not entities:
-            logger.warning("Can't extract JSON from LLM answer")
-            return _empty_result()
-
-        logger.info(f"LLM extracted entites: {list(entities.keys())}")
-        return entities
+        logger.info(f"LLM extracted entites (merged): {list(k for k, v in result.items() if v)}")
+        return result
 
     except Exception as e:
         logger.error(f"LLM NER error: {e}")
@@ -77,44 +60,21 @@ def _extract_with_llm(text: str) -> Dict:
 
 
 def _parse_json_from_response(content: str) -> Optional[Dict]:
-    try:
-        return json.loads(content)
-    except:
-        pass
-
-    json_match = re.search(r'\{[^{}]*\}', content, re.DOTALL)
-    if json_match:
-        try:
-            return json.loads(json_match.group())
-        except:
-            pass
-
-    json_match = re.search(r'\{[^{}]*(\{[^{}]*\}[^{}]*)*\}', content, re.DOTALL)
-    if json_match:
-        try:
-            return json.loads(json_match.group())
-        except:
-            pass
-
-    logger.debug(f"Can't find JSON in: {content[:200]}...")
+    try: return json.loads(content)
+    except: pass
+    match = re.search(r'\{[^{}]*\}', content, re.DOTALL) or re.search(r'\{[^{}]*(\{[^{}]*\}[^{}]*)*\}', content, re.DOTALL)
+    if match:
+        try: return json.loads(match.group())
+        except: pass
     return None
 
 
 def _empty_result() -> Dict:
     return {
-        "FIRST_NAME": None,
-        "LAST_NAME": None,
-        "MIDDLE_NAME": None,
-        "PHONE_NUMBER": [],
-        "PERSONAL_EMAIL": [],
-        "GOV_EMAIL": [],
-        "POSTAL_CODE": None,
-        "REGION": None,
-        "CITY": None,
-        "STREET": None,
-        "HOUSE": None,
-        "ROOM": None,
-        "DATE": None
+        "FIRST_NAME": None, "LAST_NAME": None, "MIDDLE_NAME": None,
+        "PHONE_NUMBER": [], "PERSONAL_EMAIL": [], "GOV_EMAIL": [],
+        "POSTAL_CODE": None, "REGION": None, "CITY": None,
+        "STREET": None, "HOUSE": None, "ROOM": None, "DATE": None
     }
 
 

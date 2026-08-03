@@ -97,7 +97,7 @@ def pdf_to_images(pdf_path: str, dpi: int = DPI) -> List[Image.Image]:
 
 
 # text_extraction_glm_ocr.py
-def extract_text_from_pdf(pdf_path: str, dpi: int = 150, prompt: str = DEFAULT_PROMPT) -> str:
+def extract_text_from_pdf(pdf_path: str, dpi: int = 160, prompt: str = DEFAULT_PROMPT) -> str:
 
     logger.info(f"OCR started: {pdf_path}")
 

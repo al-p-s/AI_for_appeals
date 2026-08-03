@@ -1,21 +1,25 @@
-# batch pipeline run (run_single.classify_text + NER)
+# batch pipeline run (run_single.classify_text_from_pdf + NER)
 # on test dataset, with metrics calculation, NER and ref. fields
 
-import os
 import json
 import logging
 from collections import defaultdict
 from pathlib import Path
+from src.DEMO.running.run_single import classify_text_from_pdf
 
-from src.DEMO.text_extraction.text_extraction_glm_ocr import extract_text_from_pdf
-from run_single import classify_text
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-TEST_DATASET_PATH = "../../../data/sets_to_learn/appeals_w_cats/100_for_test_G.json"
-TARGET_FIELDS_PATH = "../../../data/sets_to_learn/fields/target_fields_test_100.json"
-CATS_L4_PATH = "../../../data/classifier/cats4.json"
-ERRORS_OUTPUT_PATH = "../logs/classification_errors.json"
+TEST_DATASET_PATH = PROJECT_ROOT / "data" / "sets_to_learn" / "appeals_w_cats" / "100_for_test_G.json"
+TARGET_FIELDS_PATH = PROJECT_ROOT / "data" / "sets_to_learn" / "fields" / "target_fields_test_100.json"
+CATS_L4_PATH = PROJECT_ROOT / "data" / "classifier" / "cats4.json"
 
-PDF_DIR = r"D:\Обращения\100_test_appeals"
+LOGS_DIR = PROJECT_ROOT / "src" / "DEMO" / "logs"
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
+
+ERRORS_OUTPUT_PATH = LOGS_DIR / "classification_errors.json"
+LOG_FILE_PATH = LOGS_DIR / "run_batch_100_2NER_prompts.log"
+
+PDF_DIR = Path(r"D:\Обращения\100_test_appeals")
 
 NER_TO_FIELD = {
     "LAST_NAME": "PetitionerSurname",
@@ -31,7 +35,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
     handlers=[
-        logging.FileHandler("../logs/run_batch_100_glm_ocr.log", encoding="utf-8"),
+        logging.FileHandler(LOG_FILE_PATH, encoding="utf-8"),
         logging.StreamHandler()
     ]
 )
@@ -140,8 +144,6 @@ def main():
         if pdf_path is None:
             continue
 
-        text = extract_text_from_pdf(str(pdf_path))
-
         true_codes = normalize_codes(item.get("categories", []))
         true_set = set(true_codes)
         true_l2 = {to_l2(c) for c in true_codes}
@@ -150,7 +152,7 @@ def main():
         field_item = fields_by_file.get(file_name, {})
 
         try:
-            summary, _, _, l4_text, field_predictions, entities = classify_text(text)
+            summary, _, _, l4_text, field_predictions, entities = classify_text_from_pdf(pdf_path, dpi=160)
 
             pred_codes = parse_pred_codes(l4_text)
             pred_set = set(pred_codes)

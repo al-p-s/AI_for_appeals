@@ -1,10 +1,12 @@
 import json
 import logging
+from pathlib import Path
 from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
-FIELDS_CONFIG_PATH = "../../../data/classifier/category_fields.json"
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+FIELDS_CONFIG_PATH = PROJECT_ROOT / "data" / "classifier" / "category_fields.json"
 
 
 def load_field_config(config_path: str = FIELDS_CONFIG_PATH) -> Dict[str, List[str]]:

@@ -3,17 +3,14 @@
 import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
-
 from src.DEMO.running.run_single import classify_text
 
 logger = logging.getLogger(__name__)
 
-REFS_XML_PATH = "../../../data/classifier/all_refs(but_orgs).xml"
-XML_OUTPUT_DIR = "../xmls"
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+REFS_XML_PATH = PROJECT_ROOT / "data" / "classifier" / "all_refs(but_orgs).xml"
+XML_OUTPUT_DIR = PROJECT_ROOT / "xmls"
 
-# Справочные поля MainData/PetitionerData: field_name (в field_predictions) -> тег в XML.
-# Значение резолвится через справочник (см. load_reference_dicts) - ищем RowID по Name,
-# если не нашли - пишем текст как есть (для пополняемых справочников)
 MAIN_REF_FIELDS = {
     "AppealKind": "AppealKind",
     "StatusId": "StatusId",
@@ -26,7 +23,6 @@ PETITIONER_REF_FIELDS = {
     "PetitionerDistrict": "PetitionerDistrict",
 }
 
-# NER-поля PetitionerData: NER-лейбл -> тег в XML (берём первого кандидата)
 PETITIONER_NER_FIELDS = {
     "LAST_NAME": "PetitionerSurname",
     "FIRST_NAME": "PetitionerName",
@@ -37,7 +33,6 @@ PETITIONER_NER_FIELDS = {
     "DATE": "PetitionerDate",
 }
 
-# Плоские группы справочника (Name внутри Items -> RowID), 1:1 с полями выше
 FIELD_TO_GROUP_NAME = {
     "ItemID": "Форма обращения",
     "DeliveryTypeId": "Источник поступления",
@@ -63,7 +58,7 @@ def load_reference_dicts(path=REFS_XML_PATH):
     if _ref_dicts_cache is not None:
         return _ref_dicts_cache
 
-    root = ET.parse(path).getroot()
+    root = ET.parse(str(path)).getroot()
     top_groups = {
         g.get("Name"): g
         for g in root.find("./RefBaseUniversal/ItemTypes").findall("./ItemTypesRow")
@@ -78,7 +73,6 @@ def load_reference_dicts(path=REFS_XML_PATH):
         if group_name in top_groups
     }
 
-    # Тип обращения (вложенные группы)
     appeal_kind, status_id = {}, {}
     tip_obrasheniya = top_groups.get("Тип обращения")
     if tip_obrasheniya is not None:
@@ -87,7 +81,6 @@ def load_reference_dicts(path=REFS_XML_PATH):
             for row in nested.findall("./Items/ItemsRow"):
                 status_id[row.get("Name")] = row.get("RowID")
 
-    # Код вопроса - отдельная группа верхнего уровня
     question_code = {}
     kod_voprosa = top_groups.get("Код вопроса")
     if kod_voprosa is not None:
@@ -156,10 +149,14 @@ def build_container(tag, fill_fn):
     return el if len(el) > 0 else None
 
 
-def parse_l4_codes(l4_text):
-    if not l4_text:
+def parse_l4_codes(l4_input):
+    if not l4_input:
         return []
-    return [line.strip().split()[0] for line in l4_text.splitlines() if line.strip()]
+    if isinstance(l4_input, list):
+        return [str(item).strip().split()[0] for item in l4_input if str(item).strip()]
+    if isinstance(l4_input, str):
+        return [line.strip().split()[0] for line in l4_input.splitlines() if line.strip()]
+    return []
 
 
 def build_xml_from_results(summary, l4_codes, field_predictions, entities, file_name, output_dir=XML_OUTPUT_DIR):
@@ -191,8 +188,6 @@ def build_xml_from_results(summary, l4_codes, field_predictions, entities, file_
         if container is not None:
             root.append(container)
 
-    # SenderData: пока не заполняем (справочник организаций не подключен)
-
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / f"{Path(file_name).stem}.xml"
@@ -209,9 +204,3 @@ def build_appeal_xml(text, file_name, output_dir=XML_OUTPUT_DIR):
     summary, _, _, l4_text, field_predictions, entities = classify_text(text)
     l4_codes = parse_l4_codes(l4_text)
     return build_xml_from_results(summary, l4_codes, field_predictions, entities, file_name, output_dir)
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
-    from src.DEMO.running.run_single import HARDCODED_TEXT
-    build_appeal_xml(HARDCODED_TEXT, "test_appeal.pdf")

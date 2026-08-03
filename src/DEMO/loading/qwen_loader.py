@@ -29,7 +29,7 @@ class QwenLoader:
         except Exception as e:
             logger.error(f"LM Studio connection error: {e}")
 
-    def chat(self, prompt: str, temperature: float = 0.1, max_tokens: int = 500) -> Optional[str]:
+    def chat(self, prompt: str, temperature: float = 0.0, max_tokens: int = 500) -> Optional[str]:
         payload = {
             "model": self.model,
             "messages": [

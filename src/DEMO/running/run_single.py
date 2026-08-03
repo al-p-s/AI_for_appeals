@@ -1,30 +1,33 @@
 # single run of full appeal-processing pipeline
 # OCR (GLM-OCR) -> summarization -> hierarchical classification L2/L3/L4 -> reference fields classification
 
-import re
 import logging
+import re
 from pathlib import Path
+from src.DEMO.functional.keryx_classifier import classify_hierarchy, format_preds
+from src.DEMO.functional.keryx_REF_classification import classify_all_fields
+from src.DEMO.functional.qwen_make_summary import summarize
+from src.DEMO.functional.qwen_NER_inference import extract_entities
+from src.DEMO.functional.qwen_REF_classification import classify_fields_by_qwen
+from src.DEMO.text_extraction.text_extraction_glm_ocr import extract_text_from_pdf
 
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format="%(asctime)s | %(levelname)s | %(message)s",
-#     handlers=[
-#         logging.FileHandler("../logs/run_single.log", encoding="utf-8"),
-#         logging.StreamHandler()
-#     ]
-# )
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+LOG_DIR = PROJECT_ROOT / "src" / "DEMO" / "logs"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    handlers=[
+        logging.FileHandler(LOG_DIR / "run_single.log", encoding="utf-8"),
+        logging.StreamHandler()
+    ]
+)
+
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
-from src.DEMO.functional.qwen_REF_classification import classify_fields_by_qwen
-from src.DEMO.text_extraction.text_extraction_glm_ocr import extract_text_from_pdf
-from src.DEMO.functional.qwen_make_summary import summarize
-from src.DEMO.functional.keryx_classifier import classify_hierarchy, format_preds
-from src.DEMO.functional.keryx_REF_classification import classify_all_fields
-from src.DEMO.functional.qwen_NER_inference import extract_entities
-
-PDF_FILE_NAME = "../268-5.pdf"
-PDF_PATH = Path(__file__).resolve().parent / PDF_FILE_NAME
+PDF_PATH = PROJECT_ROOT / "src" / "DEMO" / "337-9-1.pdf"
 
 
 def _clean_email(value: str) -> str:
@@ -115,16 +118,28 @@ def classify_text(text: str):
     )
 
 
-def classify_text_from_pdf(pdf_path, dpi: int = None):
+def classify_text_from_pdf(pdf_path, dpi: int = 150):
     pdf_path = str(pdf_path)
     logger.info(f"OCR started: {pdf_path}")
-    if dpi is not None:
-        text = extract_text_from_pdf(pdf_path, dpi=dpi)
-    else:
-        text = extract_text_from_pdf(pdf_path)
+
+    # Пытаемся через GLM-OCR
+    text = extract_text_from_pdf(pdf_path, dpi=dpi)
+
+    # Если ошибка - гоним через паддл
+    if not text.strip():
+        logger.warning(f"GLM-OCR failed on {pdf_path}. Falling back to PaddleOCR.")
+        from src.DEMO.text_extraction.text_extraction_paddle import pdf_extract
+
+        text = pdf_extract(pdf_path)
+
     logger.info(f"OCR finished: {pdf_path} | {len(text)} symbols")
 
-    with open("ocr_150dpi_debug.txt", "w", encoding="utf-8") as f:
+    logger.info("=" * 20 + " RAW OCR TEXT " + "=" * 20)
+    logger.info(f"\n{text}\n")
+    logger.info("=" * 54)
+
+    debug_file = PROJECT_ROOT / "ocr_150dpi_debug.txt"
+    with open(debug_file, "w", encoding="utf-8") as f:
         f.write(text)
 
     return classify_text(text)
