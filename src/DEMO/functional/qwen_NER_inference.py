@@ -29,6 +29,17 @@ NER_PROMPT_ADDRESS = """Ты — система извлечения имено�
 Текст:
 {text}"""
 
+NER_PROMPT_SENDER = """Ты — система извлечения именованных сущностей (NER).
+Извлеки данные об организации-отправителе обращения и её исходящих реквизитах. Верни ТОЛЬКО JSON.
+Схема: {{"SENDER_ORG": null, "EXTERNAL_NUMBER": null, "EXTERNAL_DATE": null}}
+
+- SENDER_ORG — наименование организации, ведомства, государственного органа или юридического лица, которое НАПРАВИЛО или ПЕРЕНАПРАВИЛО данное обращение (например: "Правительство Челябинской области", "Управление Роспотребнадзора по ЧО", "ООО 'УралСтрой'"). Если обращение подано напрямую гражданином без участия сторонней организации, ставь null.
+- EXTERNAL_NUMBER — исходящий регистрационный номер документа, присвоенный организацией-отправителем (например: "01-12/345", "№ 123-А", "Исх. № 45/2025"). Если исходящий номер отсутствует, ставь null.
+- EXTERNAL_DATE — исходящая дата документа от организации-отправителя в формате ISO 8601: YYYY-MM-DDTHH:MM:SS.000. Если время не указано, ставь T00:00:00.000. Если дата отсутствует, ставь null.
+
+Текст:
+{text}"""
+
 
 def extract_entities(text: str) -> Dict:
     logger.info("Start NER by Qwen (split prompts)")
@@ -42,14 +53,17 @@ def _extract_with_llm(text: str) -> Dict:
     try:
         resp_pers = qwen.chat(NER_PROMPT_PERSONAL.format(text=text))
         resp_addr = qwen.chat(NER_PROMPT_ADDRESS.format(text=text))
+        resp_sender = qwen.chat(NER_PROMPT_SENDER.format(text=text))
 
         dict_pers = _parse_json_from_response(resp_pers) if resp_pers else {}
         dict_addr = _parse_json_from_response(resp_addr) if resp_addr else {}
+        dict_sender = _parse_json_from_response(resp_sender) if resp_sender else {}
 
         # Берем пустой шаблон и накатываем сверху то, что нашла сеть
         result = _empty_result()
         if isinstance(dict_pers, dict): result.update({k: v for k, v in dict_pers.items() if k in result})
         if isinstance(dict_addr, dict): result.update({k: v for k, v in dict_addr.items() if k in result})
+        if isinstance(dict_sender, dict): result.update({k: v for k, v in dict_sender.items() if k in result})
 
         logger.info(f"LLM extracted entites (merged): {list(k for k, v in result.items() if v)}")
         return result
@@ -74,14 +88,15 @@ def _empty_result() -> Dict:
         "FIRST_NAME": None, "LAST_NAME": None, "MIDDLE_NAME": None,
         "PHONE_NUMBER": [], "PERSONAL_EMAIL": [], "GOV_EMAIL": [],
         "POSTAL_CODE": None, "REGION": None, "CITY": None,
-        "STREET": None, "HOUSE": None, "ROOM": None, "DATE": None
+        "STREET": None, "HOUSE": None, "ROOM": None, "DATE": None,
+        "SENDER_ORG": None, "EXTERNAL_NUMBER": None, "EXTERNAL_DATE": None
     }
 
 
 def _convert_llm_to_pipeline_format(entities: Dict) -> Dict:
     result = {}
 
-    for key in ["FIRST_NAME", "LAST_NAME", "MIDDLE_NAME", "DATE"]:
+    for key in ["FIRST_NAME", "LAST_NAME", "MIDDLE_NAME", "DATE", "SENDER_ORG", "EXTERNAL_NUMBER", "EXTERNAL_DATE"]:
         if entities.get(key):
             if isinstance(entities[key], list):
                 result[key] = [str(v) for v in entities[key] if v]

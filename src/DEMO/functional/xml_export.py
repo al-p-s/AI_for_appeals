@@ -3,12 +3,12 @@
 import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from src.DEMO.running.run_single import classify_text
 
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 REFS_XML_PATH = PROJECT_ROOT / "data" / "classifier" / "all_refs(but_orgs).xml"
+ORGS_XML_PATH = PROJECT_ROOT / "data" / "classifier" / "orgs.xml"
 XML_OUTPUT_DIR = PROJECT_ROOT / "xmls"
 
 MAIN_REF_FIELDS = {
@@ -33,6 +33,11 @@ PETITIONER_NER_FIELDS = {
     "DATE": "PetitionerDate",
 }
 
+SENDER_NER_FIELDS = {
+    "EXTERNAL_NUMBER": "ExternalNumber",
+    "EXTERNAL_DATE": "ExternalDate",
+}
+
 FIELD_TO_GROUP_NAME = {
     "ItemID": "Форма обращения",
     "DeliveryTypeId": "Источник поступления",
@@ -53,7 +58,7 @@ def _is_undefined(value):
     return not v or v.lower() in UNDEFINED_MARKERS
 
 
-def load_reference_dicts(path=REFS_XML_PATH):
+def load_reference_dicts(path=REFS_XML_PATH, orgs_path=ORGS_XML_PATH):
     global _ref_dicts_cache
     if _ref_dicts_cache is not None:
         return _ref_dicts_cache
@@ -88,7 +93,23 @@ def load_reference_dicts(path=REFS_XML_PATH):
             code = row.get("Name", "").split(" ", 1)[0].strip()
             question_code[code] = row.get("RowID")
 
-    dicts.update(AppealKind=appeal_kind, StatusId=status_id, QuestionCode=question_code)
+    sender_org = {}
+    if Path(orgs_path).exists():
+        try:
+            orgs_root = ET.parse(str(orgs_path)).getroot()
+            for comp in orgs_root.iter("CompaniesRow"):
+                row_id = comp.get("RowID")
+                name = comp.get("Name", "").strip()
+                fullname = comp.get("FullName", "").strip()
+                if row_id:
+                    if name:
+                        sender_org[name] = row_id
+                    if fullname:
+                        sender_org[fullname] = row_id
+        except Exception as e:
+            logger.warning(f"Error loading orgs dictionary from {orgs_path}: {e}")
+
+    dicts.update(AppealKind=appeal_kind, StatusId=status_id, QuestionCode=question_code, SenderOrg=sender_org)
     _ref_dicts_cache = dicts
     return dicts
 
@@ -179,10 +200,18 @@ def build_xml_from_results(summary, l4_codes, field_predictions, entities, file_
         for field_name, tag in PETITIONER_REF_FIELDS.items():
             add_text_element(el, tag, resolve_ref_value(field_name, field_predictions.get(field_name), ref_dicts))
 
+    def fill_sender_data(el):
+        sender_org_val = first_or_none(entities.get("SENDER_ORG"))
+        if sender_org_val:
+            add_text_element(el, "SenderOrg", resolve_ref_value("SenderOrg", sender_org_val, ref_dicts))
+        for ner_label, tag in SENDER_NER_FIELDS.items():
+            add_text_element(el, tag, first_or_none(entities.get(ner_label)))
+
     for tag, fill_fn in [
         ("MainData", fill_main_data),
         ("QuestionData", fill_question_data),
         ("PetitionerData", fill_petitioner_data),
+        ("SenderData", fill_sender_data),
     ]:
         container = build_container(tag, fill_fn)
         if container is not None:
@@ -201,6 +230,7 @@ def build_xml_from_results(summary, l4_codes, field_predictions, entities, file_
 
 
 def build_appeal_xml(text, file_name, output_dir=XML_OUTPUT_DIR):
+    from src.DEMO.running.run_single import classify_text
     summary, _, _, l4_text, field_predictions, entities = classify_text(text)
     l4_codes = parse_l4_codes(l4_text)
     return build_xml_from_results(summary, l4_codes, field_predictions, entities, file_name, output_dir)
