@@ -1,9 +1,10 @@
-# Извлечение текстового слоя из PDF через GLM-OCR (LM Studio, VLM-пайплайн).
+# Извлечение текстового слоя из PDF и картинок через GLM-OCR (LM Studio, VLM-пайплайн).
 
 import os
 import base64
 import logging
 from io import BytesIO
+from pathlib import Path
 from typing import List, Optional
 
 from dotenv import load_dotenv
@@ -87,32 +88,49 @@ def get_glm_ocr() -> GlmOcrLoader:
     return _glm_ocr_instance
 
 
+def file_to_images(file_path: str, dpi: int = DPI) -> List[Image.Image]:
+    ext = Path(file_path).suffix.lower()
+    if ext in {".jpg", ".jpeg", ".png", ".bmp", ".webp"}:
+        return [Image.open(file_path).convert("RGB")]
+    elif ext in {".tiff", ".tif"}:
+        img = Image.open(file_path)
+        images = []
+        for i in range(getattr(img, "n_frames", 1)):
+            img.seek(i)
+            images.append(img.convert("RGB"))
+        return images
+    else:
+        return convert_from_path(
+            file_path,
+            dpi=dpi,
+            poppler_path=POPPLER_PATH,
+            fmt="png",
+        )
+
+
 def pdf_to_images(pdf_path: str, dpi: int = DPI) -> List[Image.Image]:
-    return convert_from_path(
-        pdf_path,
-        dpi=dpi,
-        poppler_path=POPPLER_PATH,
-        fmt="png",
-    )
+    return file_to_images(pdf_path, dpi=dpi)
 
 
-# text_extraction_glm_ocr.py
-def extract_text_from_pdf(pdf_path: str, dpi: int = 160, prompt: str = DEFAULT_PROMPT) -> str:
-
-    logger.info(f"OCR started: {pdf_path}")
+def extract_text_from_file(file_path: str, dpi: int = 160, prompt: str = DEFAULT_PROMPT) -> str:
+    logger.info(f"OCR started: {file_path}")
 
     ocr = get_glm_ocr()
-    images = pdf_to_images(pdf_path, dpi=dpi)
+    images = file_to_images(file_path, dpi=dpi)
 
     pages_text = []
     for i, image in enumerate(images, start=1):
-        logger.info(f"OCR page {i}/{len(images)}: {pdf_path}")
+        logger.info(f"OCR page {i}/{len(images)}: {file_path}")
         text = ocr.image_to_text(image, prompt=prompt)
         pages_text.append(text or "")
 
     full_text = PAGE_SEPARATOR.join(pages_text).strip()
-    logger.info(f"OCR finished: {pdf_path} | {len(full_text)} symbols, {len(images)} pages")
+    logger.info(f"OCR finished: {file_path} | {len(full_text)} symbols, {len(images)} pages")
     return full_text
+
+
+def extract_text_from_pdf(pdf_path: str, dpi: int = 160, prompt: str = DEFAULT_PROMPT) -> str:
+    return extract_text_from_file(pdf_path, dpi=dpi, prompt=prompt)
 
 
 logger.info("GLM-OCR extractor is ready")

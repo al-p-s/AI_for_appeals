@@ -9,6 +9,7 @@ from src.DEMO.functional.keryx_REF_classification import classify_all_fields
 from src.DEMO.functional.qwen_make_summary import summarize
 from src.DEMO.functional.qwen_NER_inference import extract_entities
 from src.DEMO.functional.qwen_REF_classification import classify_fields_by_qwen
+from src.DEMO.functional.xml_export import build_xml_from_results, parse_l4_codes
 from src.DEMO.text_extraction.text_extraction_glm_ocr import extract_text_from_pdf
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -108,6 +109,9 @@ def classify_text(text: str):
     entities = extract_entities(text)
     entities = postprocess_entities(entities)
 
+    if any(entities.get(k) for k in ["SENDER_ORG", "EXTERNAL_NUMBER", "EXTERNAL_DATE"]):
+        logger.info(f"Sender Info Extracted: Org='{entities.get('SENDER_ORG')}', Num='{entities.get('EXTERNAL_NUMBER')}', Date='{entities.get('EXTERNAL_DATE')}'")
+
     return (
         summary,
         format_preds(pred_l2),
@@ -153,6 +157,10 @@ def main():
         raise FileNotFoundError(f"PDF not found: {PDF_PATH}")
 
     summary, l2, l3, l4, fields, entities = classify_text_from_pdf(PDF_PATH)
+
+    l4_codes = parse_l4_codes(l4)
+    out_xml = build_xml_from_results(summary, l4_codes, fields, entities, PDF_PATH.name)
+    logger.info(f"XML file generated: {out_xml}")
     logger.info("Done")
 
 

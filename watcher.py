@@ -68,16 +68,23 @@ def safe_move(src_path: Path, dest_dir: Path, retries: int = 5, delay: float = 0
                 raise
 
 
-def process_pdf(pdf_path: Path):
-    logger.info(f"New file detected: {pdf_path.name}")
+SUPPORTED_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp"}
 
-    if not wait_until_file_is_ready(pdf_path):
-        logger.error(f"File {pdf_path.name} was not released within allowed time. Skipping.")
-        safe_move(pdf_path, ERRORS_DIR)
+
+def is_supported_file(path_str: str) -> bool:
+    return Path(path_str).suffix.lower() in SUPPORTED_EXTENSIONS
+
+
+def process_file(file_path: Path):
+    logger.info(f"New file detected: {file_path.name}")
+
+    if not wait_until_file_is_ready(file_path):
+        logger.error(f"File {file_path.name} was not released within allowed time. Skipping.")
+        safe_move(file_path, ERRORS_DIR)
         return
 
     try:
-        summary, l2, l3, l4, fields, entities = classify_text_from_pdf(pdf_path)
+        summary, l2, l3, l4, fields, entities = classify_text_from_pdf(file_path)
         l4_codes = parse_l4_codes(l4)
 
         out_xml = build_xml_from_results(
@@ -85,7 +92,7 @@ def process_pdf(pdf_path: Path):
             l4_codes=l4_codes,
             field_predictions=fields,
             entities=entities,
-            file_name=pdf_path.name,
+            file_name=file_path.name,
             output_dir=OUTPUT_DIR,
         )
 
@@ -93,42 +100,43 @@ def process_pdf(pdf_path: Path):
 
         # Небольшая задержка перед перемещением, чтобы Windows гарантированно снял блокировку
         time.sleep(0.5)
-        safe_move(pdf_path, PROCESSED_DIR)
-        logger.info(f"File {pdf_path.name} moved to processed/")
+        safe_move(file_path, PROCESSED_DIR)
+        logger.info(f"File {file_path.name} moved to processed/")
         logger.info("\n" +"=" * 60 + "\n")
 
     except Exception as e:
-        logger.exception(f"Error processing {pdf_path.name}: {e}")
+        logger.exception(f"Error processing {file_path.name}: {e}")
         try:
-            safe_move(pdf_path, ERRORS_DIR)
+            safe_move(file_path, ERRORS_DIR)
         except Exception:
-            logger.error(f"Failed to move {pdf_path.name} to errors/")
+            logger.error(f"Failed to move {file_path.name} to errors/")
 
 
-class PDFHandler(FileSystemEventHandler):
+class FileHandler(FileSystemEventHandler):
     def on_created(self, event):
-        if not event.is_directory and event.src_path.lower().endswith(".pdf"):
-            process_pdf(Path(event.src_path))
+        if not event.is_directory and is_supported_file(event.src_path):
+            process_file(Path(event.src_path))
 
     def on_moved(self, event):
-        if not event.is_directory and event.dest_path.lower().endswith(".pdf"):
-            process_pdf(Path(event.dest_path))
+        if not event.is_directory and is_supported_file(event.dest_path):
+            process_file(Path(event.dest_path))
 
 
 def run_watcher():
-    existing_files = list(INPUT_DIR.glob("*.pdf"))
+    existing_files = [f for f in INPUT_DIR.iterdir() if f.is_file() and is_supported_file(str(f))]
     if existing_files:
-        logger.info(f"Found {len(existing_files)} PDF in folder. Processing...")
-        for pdf in existing_files:
-            process_pdf(pdf)
+        logger.info(f"Found {len(existing_files)} document(s) in folder. Processing...")
+        for f in existing_files:
+            process_file(f)
 
-    event_handler = PDFHandler()
+    event_handler = FileHandler()
     observer = Observer()
     observer.schedule(event_handler, str(INPUT_DIR), recursive=False)
     observer.start()
 
     logger.info("=" * 60)
-    logger.info(f"Hot folder watching started (XML-mode): {INPUT_DIR}")
+    logger.info(f"Hot folder watching started (Multi-format XML-mode): {INPUT_DIR}")
+    logger.info(f"Supported formats: {', '.join(sorted(SUPPORTED_EXTENSIONS))}")
     logger.info(f"Logging in: {LOG_FILE}")
     logger.info("=" * 60)
 

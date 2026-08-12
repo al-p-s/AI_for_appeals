@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 REFS_XML_PATH = PROJECT_ROOT / "data" / "classifier" / "all_refs(but_orgs).xml"
 ORGS_XML_PATH = PROJECT_ROOT / "data" / "classifier" / "orgs.xml"
-XML_OUTPUT_DIR = PROJECT_ROOT / "xmls"
+XML_OUTPUT_DIR = PROJECT_ROOT / "src" / "DEMO" / "xmls"
 
 MAIN_REF_FIELDS = {
     "AppealKind": "AppealKind",

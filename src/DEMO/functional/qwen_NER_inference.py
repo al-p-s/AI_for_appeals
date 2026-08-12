@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from pathlib import Path
 from typing import Dict, Optional
 from src.DEMO.loading.qwen_loader import get_qwen
 
@@ -14,7 +15,7 @@ NER_PROMPT_PERSONAL = """Ты — система извлечения имено
 - PHONE_NUMBER — телефон заявителя. Их может быть несколько.
 - PERSONAL_EMAIL — email заявителя. Сюда относятся любые email-адреса автора обращения, даже если они выглядят как корпоративные или содержат название организации.
 - GOV_EMAIL — email ведомства, администрации или госслужащего, куда направлено обращение или откуда оно переслано.
-- DATE — дата из текста в формате ISO 8601: YYYY-MM-DDTHH:MM:SS.000. Если время не указано, ставь полночь (T00:00:00.000).
+- DATE — дата создания или подписания самого обращения заявителем в формате ISO 8601: YYYY-MM-DDTHH:MM:SS.000. Если время не указано, ставь полночь (T00:00:00.000).
 Дата может быть указана в обращении в разных форматах:
 - "21.02.2025" -> "2025-02-21T00:00:00.000"
 - "21 февраля 2025" -> "2025-02-21T00:00:00.000"
@@ -33,12 +34,47 @@ NER_PROMPT_SENDER = """Ты — система извлечения именов
 Извлеки данные об организации-отправителе обращения и её исходящих реквизитах. Верни ТОЛЬКО JSON.
 Схема: {{"SENDER_ORG": null, "EXTERNAL_NUMBER": null, "EXTERNAL_DATE": null}}
 
-- SENDER_ORG — наименование организации, ведомства, государственного органа или юридического лица, которое НАПРАВИЛО или ПЕРЕНАПРАВИЛО данное обращение (например: "Правительство Челябинской области", "Управление Роспотребнадзора по ЧО", "ООО 'УралСтрой'"). Если обращение подано напрямую гражданином без участия сторонней организации, ставь null.
-- EXTERNAL_NUMBER — исходящий регистрационный номер документа, присвоенный организацией-отправителем (например: "01-12/345", "№ 123-А", "Исх. № 45/2025"). Если исходящий номер отсутствует, ставь null.
-- EXTERNAL_DATE — исходящая дата документа от организации-отправителя в формате ISO 8601: YYYY-MM-DDTHH:MM:SS.000. Если время не указано, ставь T00:00:00.000. Если дата отсутствует, ставь null.
+Список известных организаций из справочника:
+{orgs_list}
+
+Инструкция для SENDER_ORG:
+1. Если организация в тексте соответствует (или является синонимом/сокращением) организации из СПИСКА ВЫШЕ — возвращай её ЭТАЛОННОЕ наименование из этого списка.
+2. Если в тексте упоминается организация, которой НЕТ в списке — возвращай её наименование из текста как есть. ВАЖНО - не придумывай название. Выводи в таком случае именно то, что указано в тексте.
+3. Если организация-отправитель не упоминается — возвращай null.
+
+- EXTERNAL_NUMBER — исходящий регистрационный номер документа от организации-отправителя (например: "01-12/345", "№ 123-А").
+- EXTERNAL_DATE — исходящая дата документа от организации-отправителя (НЕ от заявителя/просителя/гражданина) в формате ISO 8601: YYYY-MM-DDTHH:MM:SS.000. Если время не указано, ставь T00:00:00.000.
 
 Текст:
 {text}"""
+
+_org_names_cache = None
+
+
+def _get_org_names_prompt() -> str:
+    global _org_names_cache
+    if _org_names_cache is not None:
+        return _org_names_cache
+
+    PROJECT_ROOT = Path(__file__).resolve().parents[3]
+    orgs_path = PROJECT_ROOT / "data" / "classifier" / "orgs.xml"
+    names = []
+    if orgs_path.exists():
+        try:
+            import xml.etree.ElementTree as ET
+            root = ET.parse(str(orgs_path)).getroot()
+            for comp in root.iter("CompaniesRow"):
+                name = comp.get("Name", "").strip()
+                if name and name not in names:
+                    names.append(name)
+        except Exception as e:
+            logger.warning(f"Failed to load orgs for prompt: {e}")
+
+    if names:
+        _org_names_cache = "\n".join(f"- {n}" for n in names)
+    else:
+        _org_names_cache = "(список организаций недоступен)"
+    return _org_names_cache
 
 
 def extract_entities(text: str) -> Dict:
@@ -53,7 +89,8 @@ def _extract_with_llm(text: str) -> Dict:
     try:
         resp_pers = qwen.chat(NER_PROMPT_PERSONAL.format(text=text))
         resp_addr = qwen.chat(NER_PROMPT_ADDRESS.format(text=text))
-        resp_sender = qwen.chat(NER_PROMPT_SENDER.format(text=text))
+        orgs_list = _get_org_names_prompt()
+        resp_sender = qwen.chat(NER_PROMPT_SENDER.format(orgs_list=orgs_list, text=text))
 
         dict_pers = _parse_json_from_response(resp_pers) if resp_pers else {}
         dict_addr = _parse_json_from_response(resp_addr) if resp_addr else {}
