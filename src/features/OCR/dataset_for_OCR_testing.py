@@ -6,14 +6,16 @@ from io import BytesIO
 
 from dotenv import load_dotenv
 from openai import OpenAI
+from src.DEMO.config import PDF_DIRECTORY, BASE_DATA_DIR
 from pdf2image import convert_from_path
+from pathlib import Path
 
 load_dotenv()
 
 client = OpenAI()
 
-PDF_DIRECTORY = r'E:/работа/новые выбранные'
-OUTPUT_PATH = "../../../data/OCR_improving/OCR_test.json"
+# PDF_DIRECTORY is imported from config
+OUTPUT_PATH = BASE_DATA_DIR / "data" / "OCR_improving" / "OCR_test.json"
 POPPLER_PATH = os.getenv('POPPLER_PATH')
 
 MODEL = "gpt-4o"
