@@ -8,7 +8,6 @@ from pathlib import Path
 
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from src.DEMO.config import KERYX_PATH_L2, KERYX_PATH_L3, KERYX_PATH_L4
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -20,9 +19,9 @@ CATS_L2_PATH = PROJECT_ROOT / "data" / "classifier" / "cats2.json"
 CATS_L3_PATH = PROJECT_ROOT / "data" / "classifier" / "cats3.json"
 CATS_L4_PATH = PROJECT_ROOT / "data" / "classifier" / "cats4.json"
 
-# KERYX_PATH_L2 imported from config
-# KERYX_PATH_L3 imported from config
-# KERYX_PATH_L4 imported from config
+KERYX_PATH_L2 = PROJECT_ROOT / "models" / "KERYX_1340_G" / "L2"
+KERYX_PATH_L3 = PROJECT_ROOT / "models" / "KERYX_1340_G" / "L3"
+KERYX_PATH_L4 = PROJECT_ROOT / "models" / "KERYX_1340_G" / "L4"
 
 FIELDS_CONFIG_PATH = PROJECT_ROOT / "data" / "classifier" / "category_fields.json"
 

@@ -36,13 +36,6 @@ ERRORS_DIR: Path = HOT_DIR / "errors"
 PDF_DIR: Path = BASE_DATA_DIR / "100_test_appeals"
 
 # ----------------------------------------------------------------------
-# KERYX model directories (used by loading scripts)
-# ----------------------------------------------------------------------
-KERYX_PATH_L2: Path = BASE_DATA_DIR / "models" / "KERYX_1340_G" / "L2"
-KERYX_PATH_L3: Path = BASE_DATA_DIR / "models" / "KERYX_1340_G" / "L3"
-KERYX_PATH_L4: Path = BASE_DATA_DIR / "models" / "KERYX_1340_G" / "L4"
-
-# ----------------------------------------------------------------------
 # OCR testing dataset (dataset_for_OCR_testing.py)
 # ----------------------------------------------------------------------
 PDF_DIRECTORY: Path = Path(
