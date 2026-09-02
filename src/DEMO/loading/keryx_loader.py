@@ -44,11 +44,9 @@ def load_json(path):
 
 
 def load_keryx(path):
-    # Convert Path to string and enforce local file loading
-    path_str = str(path)
-    tokenizer = AutoTokenizer.from_pretrained(path_str, local_files_only=True)
+    tokenizer = AutoTokenizer.from_pretrained(path)
     model = AutoModelForSequenceClassification.from_pretrained(
-        path_str, torch_dtype=torch.float16, local_files_only=True
+        path, torch_dtype=torch.float16
     ).to("cuda").eval()
     return tokenizer, model
 
