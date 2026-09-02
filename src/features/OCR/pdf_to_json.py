@@ -5,7 +5,7 @@ import time
 from src.features.OCR.pdf_extractor_test import pdf_extract
 from src.DEMO.config import PDF_DIRECTORY, BASE_DATA_DIR
 
-directory = PDF_DIRECTORY
+directory = r'D:\OCR_improving\новые выбранные'
 files = os.listdir(directory)
 json_path = BASE_DATA_DIR / "data" / "OCR_improving" / "OCR_test.json"
 
