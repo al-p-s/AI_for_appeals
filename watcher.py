@@ -26,12 +26,7 @@ logging.basicConfig(
 logger = logging.getLogger("HotFolderWatcher")
 
 # Рабочие папки горячей директории
-HOT_DIR = Path(r"D:\Обращения\0_DEMO")
-
-INPUT_DIR = HOT_DIR / "input"
-OUTPUT_DIR = HOT_DIR / "output"
-PROCESSED_DIR = HOT_DIR / "processed"
-ERRORS_DIR = HOT_DIR / "errors"
+from src.DEMO.config import HOT_DIR, INPUT_DIR, OUTPUT_DIR, PROCESSED_DIR, ERRORS_DIR
 
 for d in [INPUT_DIR, OUTPUT_DIR, PROCESSED_DIR, ERRORS_DIR]:
     d.mkdir(parents=True, exist_ok=True)
