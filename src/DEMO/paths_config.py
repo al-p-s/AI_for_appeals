@@ -1,10 +1,3 @@
-"""
-Centralized configuration for filesystem paths used across AI_for_appeals (DEMO & services).
-
-All paths are resolved relative to PROJECT_ROOT by default, but can be
-overridden via environment variables or a root .env file.
-"""
-
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -15,9 +8,7 @@ PROJECT_ROOT: Path = Path(__file__).resolve().parents[2]
 # Automatically load .env from project root if present
 load_dotenv(PROJECT_ROOT / ".env")
 
-# --------------------------------------------------------------------------
 # Base directories
-# --------------------------------------------------------------------------
 DATA_DIR: Path = Path(os.getenv("DATA_DIR", PROJECT_ROOT / "data"))
 MODELS_DIR: Path = Path(os.getenv("MODELS_DIR", PROJECT_ROOT / "models"))
 DEMO_DIR: Path = PROJECT_ROOT / "src" / "DEMO"
@@ -28,9 +19,7 @@ XML_OUTPUT_DIR: Path = Path(os.getenv("XML_OUTPUT_DIR", DEMO_DIR / "xmls"))
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 XML_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# --------------------------------------------------------------------------
 # Classifier & Reference dictionaries (data/classifier)
-# --------------------------------------------------------------------------
 CLASSIFIER_DIR: Path = DATA_DIR / "classifier"
 CATS_L1_PATH: Path = CLASSIFIER_DIR / "cats1.json"
 CATS_L2_PATH: Path = CLASSIFIER_DIR / "cats2.json"
@@ -40,9 +29,7 @@ FIELDS_CONFIG_PATH: Path = CLASSIFIER_DIR / "category_fields.json"
 REFS_XML_PATH: Path = CLASSIFIER_DIR / "all_refs(but_orgs).xml"
 ORGS_XML_PATH: Path = CLASSIFIER_DIR / "orgs.xml"
 
-# --------------------------------------------------------------------------
 # Model checkpoints (models/)
-# --------------------------------------------------------------------------
 KERYX_BASE_DIR: Path = MODELS_DIR / "KERYX_1340_G"
 KERYX_PATH_L2: Path = KERYX_BASE_DIR / "L2"
 KERYX_PATH_L3: Path = KERYX_BASE_DIR / "L3"
@@ -51,18 +38,14 @@ KERYX_PATH_L4: Path = KERYX_BASE_DIR / "L4"
 KERYX_FIELDS_DIR_TEMPLATE: str = str(MODELS_DIR / "KERYXes_for_fields" / "KERYX_field_{}")
 GIGACHAT_PATH: Path = MODELS_DIR / "GigaChat_Lite_NEW"
 
-# --------------------------------------------------------------------------
 # Hot folder (watcher.py)
-# --------------------------------------------------------------------------
 HOT_DIR: Path = Path(os.getenv("HOT_DIR", r"D:\Обращения\0_DEMO"))
 INPUT_DIR: Path = Path(os.getenv("INPUT_DIR", HOT_DIR / "input"))
 OUTPUT_DIR: Path = Path(os.getenv("OUTPUT_DIR", HOT_DIR / "output"))
 PROCESSED_DIR: Path = Path(os.getenv("PROCESSED_DIR", HOT_DIR / "processed"))
 ERRORS_DIR: Path = Path(os.getenv("ERRORS_DIR", HOT_DIR / "errors"))
 
-# --------------------------------------------------------------------------
 # Testing & Batch evaluation datasets
-# --------------------------------------------------------------------------
 TEST_DATASET_PATH: Path = DATA_DIR / "sets_to_learn" / "appeals_w_cats" / "100_for_test_G.json"
 TARGET_FIELDS_PATH: Path = DATA_DIR / "sets_to_learn" / "fields" / "target_fields_test_100.json"
 PDF_TEST_DIR: Path = Path(os.getenv("PDF_TEST_DIR", r"D:\Обращения\100_test_appeals"))
