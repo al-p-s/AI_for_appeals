@@ -1,22 +1,27 @@
+from datetime import datetime
 import logging
-import shutil
-import time
 from pathlib import Path
+import queue
+import shutil
+import threading
+import time
+import traceback
+
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-from src.DEMO.running.run_single import classify_text_from_pdf
 from src.DEMO.functional.xml_export import build_xml_from_results, parse_l4_codes
 from src.DEMO.loading.keryx_loader import load_keryx_models
+from src.DEMO.logger_config import setup_logging
 from src.DEMO.paths_config import (
-    WATCHER_LOG_PATH,
+    ERRORS_DIR,
     HOT_DIR,
     INPUT_DIR,
     OUTPUT_DIR,
     PROCESSED_DIR,
-    ERRORS_DIR,
+    WATCHER_LOG_PATH,
 )
-from src.DEMO.logger_config import setup_logging
+from src.DEMO.running.run_single import classify_text_from_pdf
 
 # Настройка двойного логирования
 LOG_FILE = WATCHER_LOG_PATH
@@ -24,7 +29,33 @@ setup_logging(LOG_FILE)
 logger = logging.getLogger("HotFolderWatcher")
 
 for d in [INPUT_DIR, OUTPUT_DIR, PROCESSED_DIR, ERRORS_DIR]:
-    d.mkdir(parents=True, exist_ok=True)
+    try:
+        d.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        logger.warning(f"Could not create directory {d}: {e}")
+
+
+# Потокобезопасная очередь задач и отслеживание активных файлов
+file_queue: queue.Queue = queue.Queue()
+_seen_files = set()
+_seen_lock = threading.Lock()
+_stop_event = threading.Event()
+
+
+def enqueue_file(file_path: Path):
+    resolved = file_path.resolve()
+    with _seen_lock:
+        if resolved in _seen_files:
+            return
+        _seen_files.add(resolved)
+    logger.info(f"Queued for processing: {file_path.name}")
+    file_queue.put(file_path)
+
+
+def release_file(file_path: Path):
+    resolved = file_path.resolve()
+    with _seen_lock:
+        _seen_files.discard(resolved)
 
 
 def wait_until_file_is_ready(file_path: Path, timeout: int = 30) -> bool:
@@ -58,6 +89,23 @@ def safe_move(src_path: Path, dest_dir: Path, retries: int = 5, delay: float = 0
                 raise
 
 
+def write_error_report(file_path: Path, error_message: str, tb_str: str = ""):
+    error_report_path = ERRORS_DIR / f"{file_path.name}.error.txt"
+    try:
+        content = (
+            f"Timestamp: {datetime.now().isoformat()}\n"
+            f"File: {file_path.name}\n"
+            f"Original Path: {file_path}\n"
+            f"Error: {error_message}\n"
+        )
+        if tb_str:
+            content += f"\nTraceback:\n{tb_str}\n"
+        error_report_path.write_text(content, encoding="utf-8")
+        logger.info(f"Saved error report: {error_report_path.name}")
+    except Exception as e:
+        logger.error(f"Failed to write error report for {file_path.name}: {e}")
+
+
 SUPPORTED_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp"}
 
 
@@ -66,10 +114,16 @@ def is_supported_file(path_str: str) -> bool:
 
 
 def process_file(file_path: Path):
-    logger.info(f"New file detected: {file_path.name}")
+    logger.info(f"Processing started: {file_path.name}")
+
+    if not file_path.exists():
+        logger.warning(f"File no longer exists: {file_path.name}. Skipping.")
+        return
 
     if not wait_until_file_is_ready(file_path):
-        logger.error(f"File {file_path.name} was not released within allowed time. Skipping.")
+        err_msg = f"File {file_path.name} was not released within allowed time."
+        logger.error(err_msg)
+        write_error_report(file_path, err_msg)
         safe_move(file_path, ERRORS_DIR)
         return
 
@@ -92,35 +146,65 @@ def process_file(file_path: Path):
         time.sleep(0.5)
         safe_move(file_path, PROCESSED_DIR)
         logger.info(f"File {file_path.name} moved to processed/")
-        logger.info("\n" +"=" * 60 + "\n")
+        logger.info("\n" + "=" * 60 + "\n")
 
     except Exception as e:
+        tb = traceback.format_exc()
         logger.exception(f"Error processing {file_path.name}: {e}")
+        write_error_report(file_path, str(e), tb)
         try:
             safe_move(file_path, ERRORS_DIR)
         except Exception:
             logger.error(f"Failed to move {file_path.name} to errors/")
 
 
+def worker_loop():
+    logger.info("Worker thread started.")
+    while not _stop_event.is_set():
+        try:
+            file_path = file_queue.get(timeout=1.0)
+        except queue.Empty:
+            continue
+
+        if file_path is None:
+            file_queue.task_done()
+            break
+
+        try:
+            process_file(file_path)
+        except Exception as e:
+            logger.exception(f"Unexpected worker error on {file_path}: {e}")
+        finally:
+            release_file(file_path)
+            file_queue.task_done()
+
+    logger.info("Worker thread stopped.")
+
+
 class FileHandler(FileSystemEventHandler):
     def on_created(self, event):
         if not event.is_directory and is_supported_file(event.src_path):
-            process_file(Path(event.src_path))
+            enqueue_file(Path(event.src_path))
 
     def on_moved(self, event):
         if not event.is_directory and is_supported_file(event.dest_path):
-            process_file(Path(event.dest_path))
+            enqueue_file(Path(event.dest_path))
 
 
 def run_watcher():
     logger.info("Preloading KERYX models for fast inference...")
     load_keryx_models()
 
+    # Запуск фонового рабочего потока
+    worker_thread = threading.Thread(target=worker_loop, name="WatcherWorker", daemon=True)
+    worker_thread.start()
+
+    # Добавление уже существующих файлов в очередь
     existing_files = [f for f in INPUT_DIR.iterdir() if f.is_file() and is_supported_file(str(f))]
     if existing_files:
-        logger.info(f"Found {len(existing_files)} document(s) in folder. Processing...")
+        logger.info(f"Found {len(existing_files)} document(s) in folder. Adding to queue...")
         for f in existing_files:
-            process_file(f)
+            enqueue_file(f)
 
     event_handler = FileHandler()
     observer = Observer()
@@ -137,10 +221,16 @@ def run_watcher():
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
+        logger.info("Shutdown signal received. Stopping observer...")
         observer.stop()
-        logger.info("Hot folder stopping...")
-    observer.join()
+        _stop_event.set()
+        file_queue.put(None)
+        worker_thread.join(timeout=10)
+    finally:
+        observer.join()
+        logger.info("Hot folder watcher stopped.")
 
 
 if __name__ == "__main__":
     run_watcher()
+
