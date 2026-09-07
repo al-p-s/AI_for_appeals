@@ -29,95 +29,13 @@
 
 ### 2.1. [РЕШЕНО] Хардкодные пути и несовместимость сред (Server vs Local)
 
-> [!NOTE]
-> **Статус**: Решено в коммите `949453d` (ветка `feature/logging-paths`).
-> Создан модуль [src/DEMO/paths_config.py](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/DEMO/paths_config.py) с поддержкой корня `.env` и переопределения переменных, хардкод устранен во всех файлах `src/DEMO` и `watcher.py`.
-
-#### Где обнаружена проблема:
-1. **Жестко зашитые буквы дисков и абсолютные пути Windows**:
-   - [watcher.py:29](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/watcher.py#L29):
-     ```python
-     HOT_DIR = Path(r"D:\Обращения\0_DEMO")
-     ```
-     *При запуске на сервере (особенно Linux) или на машине без диска `D:` код падает с ошибкой отсутствия пути.*
-   - [src/DEMO/running/run_batch.py:22](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/DEMO/running/run_batch.py#L22):
-     ```python
-     PDF_DIR = Path(r"D:\Обращения\100_test_appeals")
-     ```
-   - [src/features/OCR/pdf_to_json.py:8](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/features/OCR/pdf_to_json.py#L8):
-     ```python
-     directory = r'D:\OCR_improving\новые выбранные'
-     ```
-   - [src/features/form_appeals/form_chel_appeals_w_cats.py:7](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/features/form_appeals/form_chel_appeals_w_cats.py#L7):
-     ```python
-     CATS_DIR = r"D:\Обращения\chel_cats"
-     ```
-   - [src/features/form_appeals/copy_folders.py:7-8](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/features/form_appeals/copy_folders.py#L7-L8):
-     ```python
-     source_dir = r"D:\Обращения\ALL"
-     dest_dir = r"D:\Обращения\100_test_appeals"
-     ```
-   - [src/features/fileds_extraction/create_fields_dataset.py:143](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/features/fileds_extraction/create_fields_dataset.py#L143):
-     ```python
-     INPUT_DIR = r"D:\Обращения\xml_w_fields"
-     ```
-   - [src/DEMO/loading/gigachat_loader.py:11](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/DEMO/loading/gigachat_loader.py#L11):
-     ```python
-     GIGACHAT_PATH = "../../../models/GigaChat_Lite_NEW"
-     ```
-2. **Дублирование вычисления `PROJECT_ROOT`**:
-   - В 8 файлах строчка `PROJECT_ROOT = Path(__file__).resolve().parents[3]` повторяется независимо. Любое перемещение файла ломает путь.
-3. **Почему была отменена предыдущая попытка централизации путей (коммиты `3b75ac0` -> `c308fb7`)**:
-   - В файле `src/DEMO/config.py` было сделано:
-     ```python
-     BASE_DATA_DIR = Path(os.getenv("BASE_DATA_DIR", Path(__file__).resolve().parents[2] / "data"))
-     KERYX_PATH_L2 = BASE_DATA_DIR / "models" / "KERYX_1340_G" / "L2"
-     ```
-     Здесь допущена ошибка: модели лежат не в `data/models`, а в корне проекта `models/`. Путь разрешался в `.../data/models/...`, чего не существовало.
-   - Также в `keryx_loader.py` добавили `local_files_only=True`, что привело к падению, если huggingface не находил кэш или веса по жестко заданному пути.
-
-#### Рекомендации по решению:
-- Создать полноценный модуль конфигурации (например, [src/config.py](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/config.py) или `src/DEMO/config.py`), в котором:
-  - Корень проекта определяется один раз: `BASE_DIR = Path(__file__).resolve().parents[1]` (для корня).
-  - Каталоги четко разделены:
-    - `DATA_DIR` (по умолчанию `BASE_DIR / "data"`, переопределяется через `DATA_DIR`)
-    - `MODELS_DIR` (по умолчанию `BASE_DIR / "models"`, переопределяется через `MODELS_DIR`)
-    - `HOT_FOLDER_DIR` (по умолчанию `BASE_DIR / "hot_folder"` или переменная `HOT_FOLDER_DIR`)
-    - `LOGS_DIR` (по умолчанию `BASE_DIR / "logs"` или `src/DEMO/logs`)
-  - Файл `.env` должен считываться из корня проекта (`find_dotenv()` или `dotenv_values()`), а не из подпапки `src/features/.env`.
-  - Все пути к внешним бинарникам (`POPPLER_PATH`, `TESSERACT_CMD`, `CUDNN_PATH`) берутся через конфигуратор с валидацией.
+**Статус**: Решено.
 
 ---
 
-### 2.2. Логирование: фрагментация, конфликты и утечки
+### 2.2. [РЕШЕНО] Логирование: фрагментация, конфликты и утечки
 
-#### Где обнаружена проблема:
-1. **Конфликт `logging.basicConfig` из-за порядка импортов**:
-   - В [watcher.py:8](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/watcher.py#L8) первой строчкой импортируется `from src.DEMO.running.run_single import classify_text_from_pdf`.
-   - В [src/DEMO/running/run_single.py:19-26](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/DEMO/running/run_single.py#L19-L26) на уровне модуля выполняется `logging.basicConfig(...)` с записью в `run_single.log`.
-   - В результате, когда управление доходит до [watcher.py:18](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/watcher.py#L18), вызов `logging.basicConfig(..., LOG_FILE)` **игнорируется** стандартной библиотекой Python (так как корневой логгер уже инициализирован!). Все логи `watcher.py` отправляются в файл `run_single.log`!
-2. **Относительный путь к лог-файлу в `app.py`**:
-   - [src/DEMO/running/app.py:12](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/DEMO/running/app.py#L12):
-     ```python
-     logging.FileHandler("../logs/full_pipeline.log", encoding="utf-8")
-     ```
-     Если запустить `python src/DEMO/running/app.py` из корня проекта, файл создастся в папке выше корня репозитория!
-3. **Отсутствие логирования в `api.py`**:
-   - В [api.py:40](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/api.py#L40) вызывается `logging.exception("Pipeline failed")`, но `logging.basicConfig()` не сконфигурирован — стек-трейс уходит в stderr без формата и времени.
-4. **Отсутствие ротации логов**:
-   - Используются простые `FileHandler`. При непрерывной работе сервиса горячей папки или API файл логов со временем займёт гигабайты и заблокирует диск.
-5. **Засорение логов сырым OCR-текстом**:
-   - В [run_single.py:141-143](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/DEMO/running/run_single.py#L141-L143) в лог пишется весь сырой распознанный текст документа (`RAW OCR TEXT`), что раздувает логи в десятки раз.
-
-#### Рекомендации по решению:
-- Создать централизованный модуль логирования (например, `src/common/logger.py` или `src/DEMO/logging_config.py`).
-- Правило: **библиотечные и функциональные модули (`functional/`, `loading/`, `running/run_single.py`) никогда не вызывают `logging.basicConfig()`!** Они лишь объявляют `logger = logging.getLogger(__name__)`.
-- Только точки входа (`watcher.py`, `api.py`, `app.py`, `run_batch.py`) настраивают конфигурацию через единую функцию, например:
-  ```python
-  setup_logging(service_name="watcher", log_dir=LOGS_DIR, level=logging.INFO, max_bytes=20*1024*1024, backup_count=5)
-  ```
-- Использовать `logging.handlers.RotatingFileHandler` для автоматической ротации логов.
-- Подавить шумные сторонние логгеры (`httpx`, `watchdog`, `pdfminer`, `transformers`, `urllib3`).
+**Статус**: Решено.
 
 ---
 
@@ -194,8 +112,8 @@
 
 | Приоритет | Компонент | Текущее состояние | Целевое решение |
 |---|---|---|---|
-| **P0** | Конфигурация путей | **[РЕШЕНО]** Устранен хардкод, создан `paths_config.py` и `.env.example` | Единый модуль конфига с автоопределением корня и поддержкой `.env` |
-| **P0** | Логирование | В работе. Конфликт `basicConfig`, логи уходят в чужие файлы | Централизованный логгер, раздельные логи для `run_single`, `run_batch`, `watcher` |
+| **P0** | Конфигурация путей | **[РЕШЕНО]** | Единый модуль конфига с автоопределением корня и поддержкой `.env` |
+| **P0** | Логирование | **[РЕШЕНО]** | Централизованный логгер logger_config.py, раздельные логи для всех скриптов |
 | **P1** | Загрузка KERYX | Модели грузятся при импорте, жесткий `.to("cuda")` | Ленивая загрузка, автовыбор device (`cuda`/`cpu`), graceful fallback |
 | **P1** | Клиент LM Studio | Разные URL в `qwen_loader` и `glm_ocr` | Единый клиент LM Studio в конфиге с проверкой связи и ретраями |
 | **P2** | Сервис Watcher | Блокирующий `sleep`, перенос без метаданных | Потокобезопасная очередь, сохранение `.error.json` |
