@@ -1,12 +1,14 @@
 import logging
-import requests
 from typing import Optional, Dict
+import requests
+
+from src.DEMO.paths_config import LMSTUDIO_BASE_URL, LMSTUDIO_CHAT_MODEL
 
 logger = logging.getLogger(__name__)
 
 # LM Studio API configuration
-LM_STUDIO_URL = "http://127.0.0.1:1234/v1/chat/completions"
-MODEL_NAME = "qwen/qwen3.5-9b"
+LM_STUDIO_URL = f"{LMSTUDIO_BASE_URL.rstrip('/')}/chat/completions"
+MODEL_NAME = LMSTUDIO_CHAT_MODEL
 
 class QwenLoader:
 

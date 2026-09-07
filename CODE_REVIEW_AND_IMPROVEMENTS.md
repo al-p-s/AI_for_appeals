@@ -39,43 +39,10 @@
 
 ---
 
-### 2.3. Загрузка моделей и аппаратные зависимости (GPU vs CPU)
+### 2.3. [РЕШЕНО] Загрузка моделей и конфигурация LM Studio
 
-#### Где обнаружена проблема:
-1. **Загрузка моделей в память на этапе импорта модуля**:
-   - В [src/DEMO/loading/keryx_loader.py:75-80](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/DEMO/loading/keryx_loader.py#L75-L80):
-     ```python
-     keryx_l2 = load_keryx(KERYX_PATH_L2)
-     keryx_l3 = load_keryx(KERYX_PATH_L3)
-     keryx_l4 = load_keryx(KERYX_PATH_L4)
-     fields_config = load_fields_config()
-     field_models = load_field_models(fields_config)
-     ```
-     При любом импорте (например, `from src.DEMO.running.run_single import classify_text` в тестах или в API) Python сразу начинает загружать гигабайты весов нейросетей в видеопамять!
-   - Если запустить скрипт на машине без CUDA или без скачанных весов, импорт модуля падает с `RuntimeError` или `FileNotFoundError`. Невозможно запустить даже `--help` или легковесные тесты.
-2. **Жестко зашитый `.to("cuda")`**:
-   - В [keryx_loader.py:49](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/DEMO/loading/keryx_loader.py#L49), [keryx_classifier.py:32](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/DEMO/functional/keryx_classifier.py#L32), [keryx_REF_classification.py:23](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/DEMO/functional/keryx_REF_classification.py#L23) везде прописан `.to("cuda")`.
-   - Если код запущен на сервере без GPU или локально для отладки интерфейса, он немедленно аварийно завершается.
-3. **Жестко зашитый URL и модель LM Studio в `qwen_loader.py`**:
-   - В [src/DEMO/loading/qwen_loader.py:8-9](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/DEMO/loading/qwen_loader.py#L8-L9):
-     ```python
-     LM_STUDIO_URL = "http://127.0.0.1:1234/v1/chat/completions"
-     MODEL_NAME = "qwen/qwen3.5-9b"
-     ```
-     При этом в [text_extraction_glm_ocr.py:21-22](file:///c:/Users/Sasha/PycharmProjects/AI_for_appeals/src/DEMO/text_extraction/text_extraction_glm_ocr.py#L21-L22) для того же LM Studio используются переменные окружения `LMSTUDIO_BASE_URL` и `LMSTUDIO_MODEL`. Возникает рассинхронизация конфигурации.
+**Статус**: Решено.
 
-#### Рекомендации по решению:
-- Сделать ленивую загрузку (Lazy loading / Singleton accessor) моделей KERYX:
-  ```python
-  def get_keryx_models():
-      ...
-  ```
-  Модели должны загружаться в память только при первом вызове классификации или при старте сервиса (в `lifespan` FastAPI / `on_start` воркера).
-- Определять устройство автоматически или через конфиг:
-  ```python
-  DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-  ```
-- Параметризовать LM Studio URL, API Key и имена моделей через переменные окружения / общий конфиг.
 
 ---
 
@@ -114,8 +81,9 @@
 |---|---|---|---|
 | **P0** | Конфигурация путей | **[РЕШЕНО]** | Единый модуль конфига с автоопределением корня и поддержкой `.env` |
 | **P0** | Логирование | **[РЕШЕНО]** | Централизованный логгер logger_config.py, раздельные логи для всех скриптов |
-| **P1** | Загрузка KERYX | Модели грузятся при импорте, жесткий `.to("cuda")` | Ленивая загрузка, автовыбор device (`cuda`/`cpu`), graceful fallback |
-| **P1** | Клиент LM Studio | Разные URL в `qwen_loader` и `glm_ocr` | Единый клиент LM Studio в конфиге с проверкой связи и ретраями |
+| **P1** | Загрузка KERYX | **[РЕШЕНО]** | Ленивая загрузка и Warm Start при старте сервисов, исключение побочных эффектов импорта |
+| **P1** | Клиент LM Studio | **[РЕШЕНО]** | Единая конфигурация LM Studio в paths_config.py и .env.example |
+
 | **P2** | Сервис Watcher | Блокирующий `sleep`, перенос без метаданных | Потокобезопасная очередь, сохранение `.error.json` |
 | **P2** | FastAPI (`api.py`) | Только текст, нет проверки здоровья сервиса | Добавить прием файлов PDF, healthcheck, фоновую обработку |
 

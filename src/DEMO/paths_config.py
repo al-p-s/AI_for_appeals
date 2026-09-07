@@ -59,3 +59,8 @@ RUN_BATCH_LOG_PATH: Path = Path(os.getenv("RUN_BATCH_LOG_PATH", LOGS_DIR / "run_
 WATCHER_LOG_PATH: Path = Path(os.getenv("WATCHER_LOG_PATH", LOGS_DIR / "watcher.log"))
 APP_LOG_PATH: Path = Path(os.getenv("APP_LOG_PATH", LOGS_DIR / "app.log"))
 API_LOG_PATH: Path = Path(os.getenv("API_LOG_PATH", LOGS_DIR / "api.log"))
+
+# LM Studio API configuration
+LMSTUDIO_BASE_URL: str = os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:1234/v1")
+LMSTUDIO_OCR_MODEL: str = os.getenv("LMSTUDIO_OCR_MODEL", os.getenv("LMSTUDIO_MODEL", "glm-ocr"))
+LMSTUDIO_CHAT_MODEL: str = os.getenv("LMSTUDIO_CHAT_MODEL", "qwen/qwen3.5-9b")

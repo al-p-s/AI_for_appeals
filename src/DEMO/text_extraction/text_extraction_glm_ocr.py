@@ -1,16 +1,18 @@
 # Извлечение текстового слоя из PDF и картинок через GLM-OCR (LM Studio, VLM-пайплайн).
 
-import os
 import base64
-import logging
 from io import BytesIO
+import logging
+import os
 from pathlib import Path
 from typing import List, Optional
 
 from dotenv import load_dotenv
+from openai import OpenAI
 from pdf2image import convert_from_path
 from PIL import Image
-from openai import OpenAI
+
+from src.DEMO.paths_config import LMSTUDIO_BASE_URL, LMSTUDIO_OCR_MODEL
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -18,8 +20,8 @@ logger.addHandler(logging.NullHandler())
 load_dotenv()
 
 POPPLER_PATH = os.getenv("POPPLER_PATH")
-LMSTUDIO_BASE_URL = os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:1234/v1")
-LMSTUDIO_MODEL = os.getenv("LMSTUDIO_MODEL", "glm-ocr")
+LMSTUDIO_MODEL = LMSTUDIO_OCR_MODEL
+
 
 DPI = 300
 PAGE_SEPARATOR = "\n\n"

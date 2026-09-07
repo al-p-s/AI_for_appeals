@@ -7,6 +7,7 @@ from watchdog.observers import Observer
 
 from src.DEMO.running.run_single import classify_text_from_pdf
 from src.DEMO.functional.xml_export import build_xml_from_results, parse_l4_codes
+from src.DEMO.loading.keryx_loader import load_keryx_models
 from src.DEMO.paths_config import (
     WATCHER_LOG_PATH,
     HOT_DIR,
@@ -112,6 +113,9 @@ class FileHandler(FileSystemEventHandler):
 
 
 def run_watcher():
+    logger.info("Preloading KERYX models for fast inference...")
+    load_keryx_models()
+
     existing_files = [f for f in INPUT_DIR.iterdir() if f.is_file() and is_supported_file(str(f))]
     if existing_files:
         logger.info(f"Found {len(existing_files)} document(s) in folder. Processing...")

@@ -63,16 +63,57 @@ def load_field_models(fields_config):
     return models
 
 
-cats_l2 = load_json(CATS_L2_PATH)["categories"]
-cats_l3 = load_json(CATS_L3_PATH)["categories"]
-cats_l4 = load_json(CATS_L4_PATH)["categories"]
-name_by_code = {c["code"]: c["name"] for c in cats_l2 + cats_l3 + cats_l4}
+_loaded = False
+_cats_l2 = None
+_cats_l3 = None
+_cats_l4 = None
+_name_by_code = None
+_keryx_l2 = None
+_keryx_l3 = None
+_keryx_l4 = None
+_field_models = None
 
-keryx_l2 = load_keryx(KERYX_PATH_L2)
-keryx_l3 = load_keryx(KERYX_PATH_L3)
-keryx_l4 = load_keryx(KERYX_PATH_L4)
 
-fields_config = load_fields_config()
-field_models = load_field_models(fields_config)
+def load_keryx_models():
+    global _loaded, _cats_l2, _cats_l3, _cats_l4, _name_by_code
+    global _keryx_l2, _keryx_l3, _keryx_l4, _field_models
 
-logger.info("KERYX loader: all models ready.")
+    if _loaded:
+        return
+
+    logger.info("Loading KERYX taxonomy dictionaries...")
+    _cats_l2 = load_json(CATS_L2_PATH)["categories"]
+    _cats_l3 = load_json(CATS_L3_PATH)["categories"]
+    _cats_l4 = load_json(CATS_L4_PATH)["categories"]
+    _name_by_code = {c["code"]: c["name"] for c in _cats_l2 + _cats_l3 + _cats_l4}
+
+    logger.info("Loading KERYX hierarchy models (L2, L3, L4) to CUDA...")
+    _keryx_l2 = load_keryx(KERYX_PATH_L2)
+    _keryx_l3 = load_keryx(KERYX_PATH_L3)
+    _keryx_l4 = load_keryx(KERYX_PATH_L4)
+
+    logger.info("Loading KERYX reference field models to CUDA...")
+    fields_config = load_fields_config()
+    _field_models = load_field_models(fields_config)
+
+    _loaded = True
+    logger.info("KERYX loader: all models ready.")
+
+
+def __getattr__(name: str):
+    """PEP 562: deferred access to module-level model attributes."""
+    attrs = {
+        "cats_l2",
+        "cats_l3",
+        "cats_l4",
+        "name_by_code",
+        "keryx_l2",
+        "keryx_l3",
+        "keryx_l4",
+        "field_models",
+    }
+    if name in attrs:
+        load_keryx_models()
+        return globals()[f"_{name}"]
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+

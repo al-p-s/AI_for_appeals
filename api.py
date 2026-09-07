@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from src.DEMO.paths_config import API_LOG_PATH
 from src.DEMO.logger_config import setup_logging
+from src.DEMO.loading.keryx_loader import load_keryx_models
 from src.DEMO.running.run_single import classify_text
 
 
@@ -13,6 +14,8 @@ async def lifespan(app: FastAPI):
     setup_logging(API_LOG_PATH)
     logger = logging.getLogger("API")
     logger.info("=" * 60)
+    logger.info("Preloading KERYX models for fast inference...")
+    load_keryx_models()
     logger.info("Server has started successfully!")
     logger.info("Swagger UI: http://127.0.0.1:8000/docs")
     logger.info("=" * 60)
