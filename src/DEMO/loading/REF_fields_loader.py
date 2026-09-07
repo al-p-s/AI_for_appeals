@@ -5,8 +5,7 @@ from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-FIELDS_CONFIG_PATH = PROJECT_ROOT / "data" / "classifier" / "category_fields.json"
+from src.DEMO.paths_config import FIELDS_CONFIG_PATH
 
 
 def load_field_config(config_path: str = FIELDS_CONFIG_PATH) -> Dict[str, List[str]]:

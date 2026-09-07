@@ -6,10 +6,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-REFS_XML_PATH = PROJECT_ROOT / "data" / "classifier" / "all_refs(but_orgs).xml"
-ORGS_XML_PATH = PROJECT_ROOT / "data" / "classifier" / "orgs.xml"
-XML_OUTPUT_DIR = PROJECT_ROOT / "src" / "DEMO" / "xmls"
+from src.DEMO.paths_config import REFS_XML_PATH, ORGS_XML_PATH, XML_OUTPUT_DIR
 
 MAIN_REF_FIELDS = {
     "AppealKind": "AppealKind",

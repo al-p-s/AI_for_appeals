@@ -13,19 +13,16 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-
-CATS_L2_PATH = PROJECT_ROOT / "data" / "classifier" / "cats2.json"
-CATS_L3_PATH = PROJECT_ROOT / "data" / "classifier" / "cats3.json"
-CATS_L4_PATH = PROJECT_ROOT / "data" / "classifier" / "cats4.json"
-
-KERYX_PATH_L2 = PROJECT_ROOT / "models" / "KERYX_1340_G" / "L2"
-KERYX_PATH_L3 = PROJECT_ROOT / "models" / "KERYX_1340_G" / "L3"
-KERYX_PATH_L4 = PROJECT_ROOT / "models" / "KERYX_1340_G" / "L4"
-
-FIELDS_CONFIG_PATH = PROJECT_ROOT / "data" / "classifier" / "category_fields.json"
-
-KERYX_FIELDS_DIR = str(PROJECT_ROOT / "models" / "KERYXes_for_fields" / "KERYX_field_{}")
+from src.DEMO.paths_config import (
+    CATS_L2_PATH,
+    CATS_L3_PATH,
+    CATS_L4_PATH,
+    KERYX_PATH_L2,
+    KERYX_PATH_L3,
+    KERYX_PATH_L4,
+    FIELDS_CONFIG_PATH,
+    KERYX_FIELDS_DIR_TEMPLATE as KERYX_FIELDS_DIR,
+)
 
 # thresholds
 THRESHOLD_L2 = 0.9

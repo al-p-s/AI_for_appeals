@@ -7,13 +7,17 @@ from watchdog.observers import Observer
 
 from src.DEMO.running.run_single import classify_text_from_pdf
 from src.DEMO.functional.xml_export import build_xml_from_results, parse_l4_codes
-
-PROJECT_ROOT = Path(__file__).resolve().parent
+from src.DEMO.paths_config import (
+    LOGS_DIR,
+    HOT_DIR,
+    INPUT_DIR,
+    OUTPUT_DIR,
+    PROCESSED_DIR,
+    ERRORS_DIR,
+)
 
 # Настройка двойного логирования
-LOG_DIR = PROJECT_ROOT / "src" / "DEMO" / "logs"
-LOG_DIR.mkdir(parents=True, exist_ok=True)
-LOG_FILE = LOG_DIR / "watcher.log"
+LOG_FILE = LOGS_DIR / "watcher.log"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,14 +28,6 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("HotFolderWatcher")
-
-# Рабочие папки горячей директории
-HOT_DIR = Path(r"D:\Обращения\0_DEMO")
-
-INPUT_DIR = HOT_DIR / "input"
-OUTPUT_DIR = HOT_DIR / "output"
-PROCESSED_DIR = HOT_DIR / "processed"
-ERRORS_DIR = HOT_DIR / "errors"
 
 for d in [INPUT_DIR, OUTPUT_DIR, PROCESSED_DIR, ERRORS_DIR]:
     d.mkdir(parents=True, exist_ok=True)

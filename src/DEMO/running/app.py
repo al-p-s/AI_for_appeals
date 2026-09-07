@@ -5,11 +5,13 @@ from src.DEMO.text_extraction.text_extraction_paddle import pdf_extract
 from src.DEMO.running.run_single import classify_text
 from src.DEMO.functional.xml_export import build_xml_from_results, parse_l4_codes
 
+from src.DEMO.paths_config import LOGS_DIR
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
     handlers=[
-        logging.FileHandler("../logs/full_pipeline.log", encoding="utf-8"),
+        logging.FileHandler(LOGS_DIR / "full_pipeline.log", encoding="utf-8"),
         logging.StreamHandler()
     ]
 )

@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from typing import Dict, Optional
 from src.DEMO.loading.qwen_loader import get_qwen
+from src.DEMO.paths_config import ORGS_XML_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +57,7 @@ def _get_org_names_prompt() -> str:
     if _org_names_cache is not None:
         return _org_names_cache
 
-    PROJECT_ROOT = Path(__file__).resolve().parents[3]
-    orgs_path = PROJECT_ROOT / "data" / "classifier" / "orgs.xml"
+    orgs_path = ORGS_XML_PATH
     names = []
     if orgs_path.exists():
         try:

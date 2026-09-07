@@ -12,10 +12,9 @@ from src.DEMO.functional.qwen_REF_classification import classify_fields_by_qwen
 from src.DEMO.functional.xml_export import build_xml_from_results, parse_l4_codes
 from src.DEMO.text_extraction.text_extraction_glm_ocr import extract_text_from_pdf
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+from src.DEMO.paths_config import LOGS_DIR, DEFAULT_TEST_PDF, DEBUG_OCR_FILE
 
-LOG_DIR = PROJECT_ROOT / "src" / "DEMO" / "logs"
-LOG_DIR.mkdir(parents=True, exist_ok=True)
+LOG_DIR = LOGS_DIR
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
@@ -28,7 +27,7 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
-PDF_PATH = PROJECT_ROOT / "src" / "DEMO" / "337-9-1.pdf"
+PDF_PATH = DEFAULT_TEST_PDF
 
 
 def _clean_email(value: str) -> str:
@@ -142,7 +141,7 @@ def classify_text_from_pdf(pdf_path, dpi: int = 150):
     logger.info(f"\n{text}\n")
     logger.info("=" * 54)
 
-    debug_file = PROJECT_ROOT / "ocr_150dpi_debug.txt"
+    debug_file = DEBUG_OCR_FILE
     with open(debug_file, "w", encoding="utf-8") as f:
         f.write(text)
 
