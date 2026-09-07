@@ -57,6 +57,5 @@ DEBUG_OCR_FILE: Path = LOGS_DIR / "ocr_150dpi_debug.txt"
 RUN_SINGLE_LOG_PATH: Path = Path(os.getenv("RUN_SINGLE_LOG_PATH", LOGS_DIR / "run_single.log"))
 RUN_BATCH_LOG_PATH: Path = Path(os.getenv("RUN_BATCH_LOG_PATH", LOGS_DIR / "run_batch_100_2NER_prompts.log"))
 WATCHER_LOG_PATH: Path = Path(os.getenv("WATCHER_LOG_PATH", LOGS_DIR / "watcher.log"))
-APP_LOG_PATH: Path = Path(os.getenv("APP_LOG_PATH", LOGS_DIR / "full_pipeline.log"))
+APP_LOG_PATH: Path = Path(os.getenv("APP_LOG_PATH", LOGS_DIR / "app.log"))
 API_LOG_PATH: Path = Path(os.getenv("API_LOG_PATH", LOGS_DIR / "api.log"))
-

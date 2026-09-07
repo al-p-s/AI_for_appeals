@@ -8,10 +8,6 @@ def setup_logging(
     console: bool = True,
     level: int = logging.INFO,
 ) -> logging.Logger:
-    """
-    Safely configure root logging for a specific service or script.
-    Clears any prior handlers to prevent accidental cross-logging between scripts.
-    """
     log_path = Path(log_file)
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
