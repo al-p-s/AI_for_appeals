@@ -1,8 +1,10 @@
 import json
 import logging
 import re
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict, Optional
+
 from src.DEMO.loading.qwen_loader import get_qwen
 from src.DEMO.paths_config import ORGS_XML_PATH
 
@@ -61,7 +63,6 @@ def _get_org_names_prompt() -> str:
     names = []
     if orgs_path.exists():
         try:
-            import xml.etree.ElementTree as ET
             root = ET.parse(str(orgs_path)).getroot()
             for comp in root.iter("CompaniesRow"):
                 name = comp.get("Name", "").strip()

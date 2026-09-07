@@ -11,20 +11,10 @@ from src.DEMO.functional.qwen_NER_inference import extract_entities
 from src.DEMO.functional.qwen_REF_classification import classify_fields_by_qwen
 from src.DEMO.functional.xml_export import build_xml_from_results, parse_l4_codes
 from src.DEMO.text_extraction.text_extraction_glm_ocr import extract_text_from_pdf
+from src.DEMO.text_extraction.text_extraction_paddle import pdf_extract as paddle_pdf_extract
+from src.DEMO.paths_config import DEFAULT_TEST_PDF, DEBUG_OCR_FILE, RUN_SINGLE_LOG_PATH
+from src.DEMO.logger_config import setup_logging
 
-from src.DEMO.paths_config import LOGS_DIR, DEFAULT_TEST_PDF, DEBUG_OCR_FILE
-
-LOG_DIR = LOGS_DIR
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    handlers=[
-        logging.FileHandler(LOG_DIR / "run_single.log", encoding="utf-8"),
-        logging.StreamHandler()
-    ]
-)
-
-logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 PDF_PATH = DEFAULT_TEST_PDF
@@ -131,9 +121,7 @@ def classify_text_from_pdf(pdf_path, dpi: int = 150):
     # Если ошибка - гоним через паддл
     if not text.strip():
         logger.warning(f"GLM-OCR failed on {pdf_path}. Falling back to PaddleOCR.")
-        from src.DEMO.text_extraction.text_extraction_paddle import pdf_extract
-
-        text = pdf_extract(pdf_path)
+        text = paddle_pdf_extract(pdf_path)
 
     logger.info(f"OCR finished: {pdf_path} | {len(text)} symbols")
 
@@ -148,7 +136,16 @@ def classify_text_from_pdf(pdf_path, dpi: int = 150):
     return classify_text(text)
 
 
+def build_appeal_xml(text: str, file_name: str, output_dir=None):
+    summary, _, _, l4_text, field_predictions, entities = classify_text(text)
+    l4_codes = parse_l4_codes(l4_text)
+    if output_dir is not None:
+        return build_xml_from_results(summary, l4_codes, field_predictions, entities, file_name, output_dir=output_dir)
+    return build_xml_from_results(summary, l4_codes, field_predictions, entities, file_name)
+
+
 def main():
+    setup_logging(RUN_SINGLE_LOG_PATH)
     logger.info("=" * 55)
     logger.info(f"Inference on: {PDF_PATH}")
 

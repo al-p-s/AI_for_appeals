@@ -9,10 +9,6 @@ from pathlib import Path
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-
-
 from src.DEMO.paths_config import (
     CATS_L2_PATH,
     CATS_L3_PATH,
@@ -23,6 +19,9 @@ from src.DEMO.paths_config import (
     FIELDS_CONFIG_PATH,
     KERYX_FIELDS_DIR_TEMPLATE as KERYX_FIELDS_DIR,
 )
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 # thresholds
 THRESHOLD_L2 = 0.9

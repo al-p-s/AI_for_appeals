@@ -52,3 +52,11 @@ PDF_TEST_DIR: Path = Path(os.getenv("PDF_TEST_DIR", r"D:\Обращения\100_
 ERRORS_OUTPUT_PATH: Path = LOGS_DIR / "classification_errors.json"
 DEFAULT_TEST_PDF: Path = DEMO_DIR / "337-9-1.pdf"
 DEBUG_OCR_FILE: Path = LOGS_DIR / "ocr_150dpi_debug.txt"
+
+# Log files (centralized log file paths for services and scripts)
+RUN_SINGLE_LOG_PATH: Path = Path(os.getenv("RUN_SINGLE_LOG_PATH", LOGS_DIR / "run_single.log"))
+RUN_BATCH_LOG_PATH: Path = Path(os.getenv("RUN_BATCH_LOG_PATH", LOGS_DIR / "run_batch_100_2NER_prompts.log"))
+WATCHER_LOG_PATH: Path = Path(os.getenv("WATCHER_LOG_PATH", LOGS_DIR / "watcher.log"))
+APP_LOG_PATH: Path = Path(os.getenv("APP_LOG_PATH", LOGS_DIR / "full_pipeline.log"))
+API_LOG_PATH: Path = Path(os.getenv("API_LOG_PATH", LOGS_DIR / "api.log"))
+

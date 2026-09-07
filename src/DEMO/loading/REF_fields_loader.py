@@ -3,9 +3,9 @@ import logging
 from pathlib import Path
 from typing import Dict, List
 
-logger = logging.getLogger(__name__)
-
 from src.DEMO.paths_config import FIELDS_CONFIG_PATH
+
+logger = logging.getLogger(__name__)
 
 
 def load_field_config(config_path: str = FIELDS_CONFIG_PATH) -> Dict[str, List[str]]:

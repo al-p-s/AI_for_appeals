@@ -11,12 +11,11 @@ from src.DEMO.paths_config import (
     TEST_DATASET_PATH,
     TARGET_FIELDS_PATH,
     CATS_L4_PATH,
-    LOGS_DIR,
     ERRORS_OUTPUT_PATH,
     PDF_TEST_DIR as PDF_DIR,
+    RUN_BATCH_LOG_PATH as LOG_FILE_PATH,
 )
-
-LOG_FILE_PATH = LOGS_DIR / "run_batch_100_2NER_prompts.log"
+from src.DEMO.logger_config import setup_logging
 
 NER_TO_FIELD = {
     "LAST_NAME": "PetitionerSurname",
@@ -28,15 +27,7 @@ NER_TO_FIELD = {
     "DATE": "PetitionerDate",
 }
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    handlers=[
-        logging.FileHandler(LOG_FILE_PATH, encoding="utf-8"),
-        logging.StreamHandler()
-    ]
-)
-logging.getLogger("httpx").setLevel(logging.WARNING)
+setup_logging(LOG_FILE_PATH)
 logger = logging.getLogger(__name__)
 
 

@@ -8,25 +8,18 @@ from watchdog.observers import Observer
 from src.DEMO.running.run_single import classify_text_from_pdf
 from src.DEMO.functional.xml_export import build_xml_from_results, parse_l4_codes
 from src.DEMO.paths_config import (
-    LOGS_DIR,
+    WATCHER_LOG_PATH,
     HOT_DIR,
     INPUT_DIR,
     OUTPUT_DIR,
     PROCESSED_DIR,
     ERRORS_DIR,
 )
+from src.DEMO.logger_config import setup_logging
 
 # Настройка двойного логирования
-LOG_FILE = LOGS_DIR / "watcher.log"
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    handlers=[
-        logging.FileHandler(LOG_FILE, encoding="utf-8"),
-        logging.StreamHandler()
-    ]
-)
+LOG_FILE = WATCHER_LOG_PATH
+setup_logging(LOG_FILE)
 logger = logging.getLogger("HotFolderWatcher")
 
 for d in [INPUT_DIR, OUTPUT_DIR, PROCESSED_DIR, ERRORS_DIR]:

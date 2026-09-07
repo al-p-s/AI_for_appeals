@@ -5,10 +5,10 @@ import logging
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 
+from src.DEMO.paths_config import GIGACHAT_PATH
+
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-
-from src.DEMO.paths_config import GIGACHAT_PATH
 
 SUMM_PROMPT = """Кратко изложи суть обращения в 1-2 предложениях: кто обращается, на что жалуется или что просит, и почему.
 ОБРАЩЕНИЕ:
